@@ -104,7 +104,17 @@ export const callHistoryRecords = [
     audio: 'available',
     transcript: 'Customer enrolled in auto-pay service. Agent confirmed bank account details and set up recurring payments.',
     date: '2025-10-23 14:50'
-  }
+  },
+  {
+    id: '6',
+    caller: 'John Smith',
+    agent: 'AI Agent 1',
+    duration: '1:34',
+    intent: 'Fraud Reporting',
+    audio: 'available',
+    transcript: 'Customer reported suspicious transaction on their credit card ending in 4532. Agent verified identity and initiated fraud investigation process.',
+    date: '2025-10-23 07:15'
+  },
 ];
 
 export const reportTypes = [
