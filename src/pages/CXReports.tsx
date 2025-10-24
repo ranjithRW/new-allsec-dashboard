@@ -43,6 +43,14 @@ export default function CXReports() {
       htmlEl.style.webkitTextFillColor = 'initial';
     });
 
+    // Hide the export button during PDF generation
+    const exportButton = element.querySelector('.export-pdf-button') as HTMLElement;
+    let originalButtonDisplay = '';
+    if (exportButton) {
+      originalButtonDisplay = exportButton.style.display;
+      exportButton.style.display = 'none';
+    }
+
     // Use html2canvas to capture the element and jsPDF to create the PDF
     html2canvas(element, { 
       scale: 2, 
@@ -84,6 +92,11 @@ export default function CXReports() {
           element.style.background = background;
           element.style.webkitTextFillColor = webkitTextFillColor;
         });
+
+        // Restore export button visibility
+        if (exportButton) {
+          exportButton.style.display = originalButtonDisplay;
+        }
       })
       .catch((err) => {
         // Restore original gradient styles even on error
@@ -92,6 +105,11 @@ export default function CXReports() {
           element.style.background = background;
           element.style.webkitTextFillColor = webkitTextFillColor;
         });
+
+        // Restore export button visibility even on error
+        if (exportButton) {
+          exportButton.style.display = originalButtonDisplay;
+        }
         
         // Fallback alert
         // eslint-disable-next-line no-console
@@ -166,7 +184,7 @@ export default function CXReports() {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleExportPDF}
-          className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg shadow-md hover:shadow-lg transition-all font-medium text-sm sm:text-base"
+          className="export-pdf-button flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg shadow-md hover:shadow-lg transition-all font-medium text-sm sm:text-base"
         >
           <Download size={18} className="sm:w-5 sm:h-5" />
           <span className="hidden sm:inline">Export as PDF</span>
