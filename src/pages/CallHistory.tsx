@@ -1,7 +1,69 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock } from 'lucide-react';
-import { callHistoryKPI, callHistoryRecords, reportTypes } from '../data/mockData';
+import { callHistoryRecords, reportTypes } from '../data/mockData';
+
+// Helper function to parse duration string to seconds
+const parseDurationToSeconds = (duration: string): number => {
+  const parts = duration.split(':');
+  if (parts.length === 2) {
+    const minutes = parseInt(parts[0]);
+    const seconds = parseInt(parts[1]);
+    return minutes * 60 + seconds;
+  }
+  return 0;
+};
+
+// Helper function to format seconds back to duration string
+const formatDuration = (totalSeconds: number): string => {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+};
+
+// Helper function to calculate dynamic KPIs
+const calculateDynamicKPIs = (records: typeof callHistoryRecords) => {
+  if (records.length === 0) {
+    return {
+      totalCalls: 0,
+      avgCallDuration: '0:00',
+      resolutionRate: '0%',
+      escalationRate: '0%'
+    };
+  }
+
+  const totalCalls = records.length;
+  
+  // Calculate average call duration
+  const totalDurationSeconds = records.reduce((sum, record) => {
+    return sum + parseDurationToSeconds(record.duration);
+  }, 0);
+  const avgDurationSeconds = Math.round(totalDurationSeconds / totalCalls);
+  const avgCallDuration = formatDuration(avgDurationSeconds);
+
+  // For resolution rate, we'll simulate based on call duration (longer calls = more likely resolved)
+  // In a real app, this would come from actual resolution data
+  const resolvedCalls = records.filter(record => {
+    const durationSeconds = parseDurationToSeconds(record.duration);
+    return durationSeconds > 120; // Calls longer than 2 minutes are considered resolved
+  }).length;
+  const resolutionRate = Math.round((resolvedCalls / totalCalls) * 100);
+
+  // For escalation rate, we'll simulate based on call duration (shorter calls = more likely escalated)
+  // In a real app, this would come from actual escalation data
+  const escalatedCalls = records.filter(record => {
+    const durationSeconds = parseDurationToSeconds(record.duration);
+    return durationSeconds < 90; // Calls shorter than 1.5 minutes are considered escalated
+  }).length;
+  const escalationRate = Math.round((escalatedCalls / totalCalls) * 100);
+
+  return {
+    totalCalls,
+    avgCallDuration,
+    resolutionRate: `${resolutionRate}%`,
+    escalationRate: `${escalationRate}%`
+  };
+};
 
 export default function CallHistory() {
   const [selectedDate, setSelectedDate] = useState('2025-10-23');
@@ -13,6 +75,11 @@ export default function CallHistory() {
   const filteredRecords = selectedIntent 
     ? callHistoryRecords.filter(record => record.intent === selectedIntent)
     : callHistoryRecords;
+
+  // Calculate dynamic KPIs based on filtered records
+  const dynamicKPIs = useMemo(() => {
+    return calculateDynamicKPIs(filteredRecords);
+  }, [filteredRecords]);
 
   // Handle intent button click
   const handleIntentClick = (intent: string) => {
@@ -114,10 +181,10 @@ export default function CallHistory() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6">
         {[
-          { label: 'Total Calls', value: callHistoryKPI.totalCalls, color: 'from-blue-500 to-cyan-500' },
-          { label: 'Avg Call Duration', value: callHistoryKPI.avgCallDuration, color: 'from-green-500 to-emerald-500' },
-          { label: 'Resolution Rate', value: callHistoryKPI.resolutionRate, color: 'from-purple-500 to-pink-500' },
-          { label: 'Escalation Rate', value: callHistoryKPI.escalationRate, color: 'from-amber-500 to-orange-500' }
+          { label: 'Total Calls', value: dynamicKPIs.totalCalls, color: 'from-blue-500 to-cyan-500' },
+          { label: 'Avg Call Duration', value: dynamicKPIs.avgCallDuration, color: 'from-green-500 to-emerald-500' },
+          { label: 'Resolution Rate', value: dynamicKPIs.resolutionRate, color: 'from-purple-500 to-pink-500' },
+          { label: 'Escalation Rate', value: dynamicKPIs.escalationRate, color: 'from-amber-500 to-orange-500' }
         ].map((kpi, index) => (
           <motion.div
             key={kpi.label}
