@@ -177,8 +177,8 @@ export default function CXReports() {
         className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4"
       >
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Voice Agent Performance Dashboard</h2>
-          <p className="text-sm sm:text-base text-gray-600">Comprehensive analytics and insights</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">Voice Agent Performance Dashboard</h2>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Comprehensive analytics and insights</p>
         </div>
         <motion.button
           whileHover={{ scale: 1.05 }}
@@ -207,10 +207,10 @@ export default function CXReports() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
             whileHover={{ scale: 1.02, y: -4 }}
-            className="bg-white rounded-xl shadow-md p-4 sm:p-6 border border-gray-100"
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6 border border-gray-100 dark:border-gray-700"
           >
-            <p className="text-xs sm:text-sm text-gray-600 font-medium mb-2">{kpi.label}</p>
-            <p className={`text-xl sm:text-2xl font-bold bg-gradient-to-r ${kpi.color} gradient-text`}>
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 font-medium mb-2">{kpi.label}</p>
+            <p className={`text-xl sm:text-2xl font-bold text-black dark:text-white`}>
               {kpi.value}
             </p>
           </motion.div>
@@ -222,10 +222,10 @@ export default function CXReports() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.8 }}
-          className="lg:col-span-2 bg-white rounded-xl shadow-md p-4 sm:p-6 border border-gray-100"
+          className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6 border border-gray-100 dark:border-gray-700"
         >
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Intent Accuracy</h3>
-          <p className="text-xs sm:text-sm text-gray-600 mb-4 sm:mb-6">Calls escalated vs handled by AI</p>
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">Intent Accuracy</h3>
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">Calls escalated vs handled by AI</p>
           <div className="h-64 sm:h-80">
             <Bar data={intentChartData} options={chartOptions} />
           </div>
@@ -235,13 +235,13 @@ export default function CXReports() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.9 }}
-          className="bg-white rounded-xl shadow-md p-4 sm:p-6 border border-gray-100"
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6 border border-gray-100 dark:border-gray-700"
         >
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Ticket Status by Week</h3>
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">Ticket Status by Week</h3>
           <div className="space-y-4 sm:space-y-6">
             <div>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs sm:text-sm font-medium text-gray-700">Week 1</span>
+                <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">Week 1</span>
               </div>
               <div className="flex gap-2">
                 <div className="flex-1">
@@ -265,7 +265,7 @@ export default function CXReports() {
 
             <div>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs sm:text-sm font-medium text-gray-700">Week 2</span>
+                <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">Week 2</span>
               </div>
               <div className="flex gap-2">
                 <div className="flex-1">
