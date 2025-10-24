@@ -22,7 +22,36 @@ export const intentAccuracyData = {
 
 export const ticketStatusByWeek = {
   week1: { open: 12, resolved: 8 },
-  week2: { open: 15, resolved: 10 }
+  week2: { open: 15, resolved: 10 },
+  week3: { open: 18, resolved: 14 },
+  week4: { open: 22, resolved: 16 }
+};
+
+// Function to get current week of the month
+export const getCurrentWeekOfMonth = () => {
+  const now = new Date();
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+  const pastDaysOfMonth = now.getDate() - 1;
+  return Math.ceil((pastDaysOfMonth + firstDay.getDay() + 1) / 7);
+};
+
+// Function to generate dynamic week data based on current week
+export const getDynamicWeekData = () => {
+  const currentWeek = getCurrentWeekOfMonth();
+  const weeks = [];
+  
+  for (let i = 1; i <= currentWeek; i++) {
+    const weekKey = `week${i}` as keyof typeof ticketStatusByWeek;
+    if (ticketStatusByWeek[weekKey]) {
+      weeks.push({
+        week: `Week ${i}`,
+        open: ticketStatusByWeek[weekKey].open,
+        resolved: ticketStatusByWeek[weekKey].resolved
+      });
+    }
+  }
+  
+  return weeks;
 };
 
 export const callHistoryRecords = [

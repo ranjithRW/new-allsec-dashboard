@@ -12,11 +12,66 @@ import {
   Legend
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
-import { cxReportsKPI, intentAccuracyData, ticketStatusByWeek } from '../data/mockData';
+import { cxReportsKPI, intentAccuracyData, getDynamicWeekData, getCurrentWeekOfMonth } from '../data/mockData';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 export default function CXReports() {
+  // Get dynamic week data based on current week of month
+  const dynamicWeekData = getDynamicWeekData();
+  const currentWeek = getCurrentWeekOfMonth();
+
+  // Create chart data for ticket status by week
+  const ticketStatusChartData = {
+    labels: dynamicWeekData.map(week => week.week),
+    datasets: [
+      {
+        label: 'Open Tickets',
+        data: dynamicWeekData.map(week => week.open),
+        backgroundColor: 'rgba(59, 130, 246, 0.8)',
+        borderColor: 'rgba(59, 130, 246, 1)',
+        borderWidth: 1
+      },
+      {
+        label: 'Resolved Tickets',
+        data: dynamicWeekData.map(week => week.resolved),
+        backgroundColor: 'rgba(34, 197, 94, 0.8)',
+        borderColor: 'rgba(34, 197, 94, 1)',
+        borderWidth: 1
+      }
+    ]
+  };
+
+  const ticketStatusChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+        labels: {
+          font: { size: 12 },
+          padding: 15
+        }
+      },
+      title: {
+        display: false
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: {
+          color: 'rgba(0, 0, 0, 0.05)'
+        }
+      },
+      x: {
+        grid: {
+          display: false
+        }
+      }
+    }
+  };
+
   const handleExportPDF = () => {
     const element = document.getElementById('dashboard-root');
     if (!element) {
@@ -237,55 +292,14 @@ export default function CXReports() {
           transition={{ duration: 0.5, delay: 0.9 }}
           className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6 border border-gray-100 dark:border-gray-700"
         >
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">Ticket Status by Week</h3>
-          <div className="space-y-4 sm:space-y-6">
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">Week 1</span>
-              </div>
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <div className="bg-blue-100 rounded-lg p-3 sm:p-4 text-center">
-                    <div className="text-lg sm:text-2xl font-bold text-blue-600 mb-1">
-                      {ticketStatusByWeek.week1.open}
-                    </div>
-                    <div className="text-xs text-blue-700 font-medium">Open</div>
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <div className="bg-green-100 rounded-lg p-3 sm:p-4 text-center">
-                    <div className="text-lg sm:text-2xl font-bold text-green-600 mb-1">
-                      {ticketStatusByWeek.week1.resolved}
-                    </div>
-                    <div className="text-xs text-green-700 font-medium">Resolved</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">Week 2</span>
-              </div>
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <div className="bg-blue-100 rounded-lg p-3 sm:p-4 text-center">
-                    <div className="text-lg sm:text-2xl font-bold text-blue-600 mb-1">
-                      {ticketStatusByWeek.week2.open}
-                    </div>
-                    <div className="text-xs text-blue-700 font-medium">Open</div>
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <div className="bg-green-100 rounded-lg p-3 sm:p-4 text-center">
-                    <div className="text-lg sm:text-2xl font-bold text-green-600 mb-1">
-                      {ticketStatusByWeek.week2.resolved}
-                    </div>
-                    <div className="text-xs text-green-700 font-medium">Resolved</div>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Ticket Status by Week
+          </h3>
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-4">
+            Showing data for {currentWeek} week{currentWeek > 1 ? 's' : ''} of current month
+          </p>
+          <div className="h-64 sm:h-80">
+            <Bar data={ticketStatusChartData} options={ticketStatusChartOptions} />
           </div>
         </motion.div>
       </div>
