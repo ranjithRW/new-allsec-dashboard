@@ -210,7 +210,7 @@ export default function CXReports() {
             className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6 border border-gray-100 dark:border-gray-700"
           >
             <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 font-medium mb-2">{kpi.label}</p>
-            <p className={`text-xl sm:text-2xl font-bold text-black dark:text-white`}>
+            <p className={`text-sm sm:text-xl font-bold text-black dark:text-white`}>
               {kpi.value}
             </p>
           </motion.div>

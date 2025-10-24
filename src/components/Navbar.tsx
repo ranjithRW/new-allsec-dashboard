@@ -19,7 +19,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
           >
             <Menu size={20} className="text-gray-600 dark:text-gray-300" />
           </button>
-          <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-700 dark:text-white">
             ALLSEC AI
           </h1>
         </div>
