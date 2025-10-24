@@ -65,16 +65,67 @@ const calculateDynamicKPIs = (records: typeof callHistoryRecords) => {
   };
 };
 
+// Helper function to get today's date in YYYY-MM-DD format
+const getTodayDate = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function CallHistory() {
-  const [selectedDate, setSelectedDate] = useState('2025-10-23');
+  const [selectedDate, setSelectedDate] = useState(getTodayDate());
   const [startTime, setStartTime] = useState('00:00');
   const [endTime, setEndTime] = useState('23:59');
   const [selectedIntent, setSelectedIntent] = useState<string | null>(null);
 
-  // Filter call records based on selected intent
-  const filteredRecords = selectedIntent 
-    ? callHistoryRecords.filter(record => record.intent === selectedIntent)
-    : callHistoryRecords;
+  // Helper function to parse date and time from record
+  const parseRecordDateTime = (dateString: string) => {
+    const [date, time] = dateString.split(' ');
+    const [year, month, day] = date.split('-');
+    const [hour, minute] = time.split(':');
+    return new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute));
+  };
+
+  // Helper function to check if record is within time range
+  const isWithinTimeRange = (recordDate: string, startTime: string, endTime: string) => {
+    const recordDateTime = parseRecordDateTime(recordDate);
+    const [startHour, startMinute] = startTime.split(':').map(Number);
+    const [endHour, endMinute] = endTime.split(':').map(Number);
+    
+    const startDateTime = new Date(recordDateTime);
+    startDateTime.setHours(startHour, startMinute, 0, 0);
+    
+    const endDateTime = new Date(recordDateTime);
+    endDateTime.setHours(endHour, endMinute, 59, 999);
+    
+    return recordDateTime >= startDateTime && recordDateTime <= endDateTime;
+  };
+
+  // Filter call records based on selected intent and timeline
+  const filteredRecords = useMemo(() => {
+    let filtered = callHistoryRecords;
+
+    // Filter by intent
+    if (selectedIntent) {
+      filtered = filtered.filter(record => record.intent === selectedIntent);
+    }
+
+    // Filter by date
+    const selectedDateFormatted = selectedDate; // Already in YYYY-MM-DD format
+    filtered = filtered.filter(record => {
+      const recordDate = record.date.split(' ')[0]; // Extract date part
+      return recordDate === selectedDateFormatted;
+    });
+
+    // Filter by time range
+    filtered = filtered.filter(record => 
+      isWithinTimeRange(record.date, startTime, endTime)
+    );
+
+    return filtered;
+  }, [selectedIntent, selectedDate, startTime, endTime]);
 
   // Calculate dynamic KPIs based on filtered records
   const dynamicKPIs = useMemo(() => {
@@ -211,11 +262,30 @@ export default function CallHistory() {
         <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Call Records</h3>
-            {selectedIntent && (
-              <span className="text-sm text-gray-600 dark:text-gray-400">
+            <div className="flex flex-col items-end">
+              {/* <span className="text-sm text-gray-600 dark:text-gray-400">
                 Showing {filteredRecords.length} of {callHistoryRecords.length} records
-              </span>
-            )}
+              </span> */}
+              {(selectedIntent || selectedDate !== getTodayDate() || startTime !== '00:00' || endTime !== '23:59') && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {selectedIntent && (
+                    <span className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full">
+                      Intent: {selectedIntent}
+                    </span>
+                  )}
+                  {selectedDate !== getTodayDate() && (
+                    <span className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full">
+                      Date: {selectedDate}
+                    </span>
+                  )}
+                  {(startTime !== '00:00' || endTime !== '23:59') && (
+                    <span className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full">
+                      Time: {startTime} - {endTime}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
         <div className="overflow-x-auto">
