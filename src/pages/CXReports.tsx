@@ -108,33 +108,62 @@ export default function CXReports() {
 
     // Use html2canvas to capture the element and jsPDF to create the PDF
     html2canvas(element, { 
-      scale: 2, 
+      scale: 1.5, 
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#ffffff',
       logging: false,
       width: element.scrollWidth,
-      height: element.scrollHeight
+      height: element.scrollHeight,
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: window.innerWidth,
+      windowHeight: window.innerHeight
     })
       .then((canvas) => {
         const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
+        
+        // Determine page orientation based on content dimensions
+        const tempPdf = new jsPDF('p', 'mm', 'a4');
+        const imgProps = tempPdf.getImageProperties(imgData);
+        const isLandscape = imgProps.width > imgProps.height;
+        const pdf = new jsPDF(isLandscape ? 'l' : 'p', 'mm', 'a4');
 
-        const imgProps = pdf.getImageProperties(imgData);
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
+        // Ensure content fits within page width
+        const maxWidth = pdfWidth - 20; // 10mm margin on each side
+        const maxHeight = pdf.internal.pageSize.getHeight() - 20; // 10mm margin top/bottom
+        
+        let finalWidth = pdfWidth;
+        let finalHeight = pdfHeight;
+        
+        if (pdfHeight > maxHeight) {
+          finalHeight = maxHeight;
+          finalWidth = (imgProps.width * finalHeight) / imgProps.height;
+        }
+        
+        if (finalWidth > maxWidth) {
+          finalWidth = maxWidth;
+          finalHeight = (imgProps.height * finalWidth) / imgProps.width;
+        }
+
+        // Center the content on the page
+        const xOffset = (pdfWidth - finalWidth) / 2;
+        const yOffset = (pdf.internal.pageSize.getHeight() - finalHeight) / 2;
+
         // If content is larger than page, split into multiple pages
-        let position = 0;
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+        let position = yOffset;
+        pdf.addImage(imgData, 'PNG', xOffset, position, finalWidth, finalHeight);
 
         // Add extra pages if needed
-        if (pdfHeight > pdf.internal.pageSize.getHeight()) {
-          let remainingHeight = pdfHeight - pdf.internal.pageSize.getHeight();
+        if (finalHeight > pdf.internal.pageSize.getHeight() - 20) {
+          let remainingHeight = finalHeight - (pdf.internal.pageSize.getHeight() - 20);
           while (remainingHeight > 0) {
             pdf.addPage();
-            position = -pdf.internal.pageSize.getHeight() * (Math.ceil((pdfHeight - remainingHeight) / pdf.internal.pageSize.getHeight()));
-            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+            position = -pdf.internal.pageSize.getHeight() * (Math.ceil((finalHeight - remainingHeight) / pdf.internal.pageSize.getHeight()));
+            pdf.addImage(imgData, 'PNG', xOffset, position, finalWidth, finalHeight);
             remainingHeight -= pdf.internal.pageSize.getHeight();
           }
         }
@@ -224,30 +253,32 @@ export default function CXReports() {
   };
 
   return (
-  <div id="dashboard-root" className="p-4 sm:p-6 lg:p-8">
+  <div id="dashboard-root" className="p-4">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4"
+        className="flex items-start justify-between mb-6 gap-4"
       >
-        <div>
+        <div className="flex-1 min-w-0">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">Voice Agent Performance Dashboard</h2>
           <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Comprehensive analytics and insights</p>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleExportPDF}
-          className="export-pdf-button flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg shadow-md hover:shadow-lg transition-all font-medium text-sm sm:text-base"
-        >
-          <Download size={18} className="sm:w-5 sm:h-5" />
-          <span className="hidden sm:inline">Export as PDF</span>
-          <span className="sm:hidden">Export</span>
-        </motion.button>
+        <div className="flex-shrink-0">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleExportPDF}
+            className="export-pdf-button flex items-center gap-2 px-3 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg shadow-md hover:shadow-lg transition-all font-medium text-xs sm:text-base whitespace-nowrap"
+          >
+            <Download size={16} className="sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline">Export as PDF</span>
+            <span className="sm:hidden">Export</span>
+          </motion.button>
+        </div>
       </motion.div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         {[
           { label: 'Intent Recognition', value: cxReportsKPI.intentRecognition, color: 'from-blue-500 to-cyan-500' },
           { label: 'Average Response Time', value: cxReportsKPI.avgResponseTime, color: 'from-green-500 to-emerald-500' },
@@ -262,7 +293,7 @@ export default function CXReports() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
             whileHover={{ scale: 1.02, y: -4 }}
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6 border border-gray-100 dark:border-gray-700"
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border border-gray-100 dark:border-gray-700"
           >
             <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 font-medium mb-2">{kpi.label}</p>
             <p className={`text-sm sm:text-xl font-bold text-black dark:text-white`}>
@@ -272,12 +303,12 @@ export default function CXReports() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.8 }}
-          className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6 border border-gray-100 dark:border-gray-700"
+          className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border border-gray-100 dark:border-gray-700"
         >
           <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">Intent Accuracy</h3>
           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">Calls escalated vs handled by AI</p>
@@ -290,7 +321,7 @@ export default function CXReports() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.9 }}
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6 border border-gray-100 dark:border-gray-700"
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border border-gray-100 dark:border-gray-700"
         >
           <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">
             Ticket Status by Week
