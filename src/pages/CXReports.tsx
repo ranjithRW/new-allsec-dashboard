@@ -1,5 +1,7 @@
 import { motion } from 'framer-motion';
 import { Download } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -16,7 +18,86 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 export default function CXReports() {
   const handleExportPDF = () => {
-    alert('Exporting dashboard as PDF...');
+    const element = document.getElementById('dashboard-root');
+    if (!element) {
+      alert('Dashboard element not found.');
+      return;
+    }
+
+    // Temporarily change gradient text to solid colors for better PDF rendering
+    const gradientElements = element.querySelectorAll('.gradient-text');
+    const originalStyles: { element: HTMLElement; color: string; background: string; webkitTextFillColor: string }[] = [];
+    
+    gradientElements.forEach((el) => {
+      const htmlEl = el as HTMLElement;
+      originalStyles.push({
+        element: htmlEl,
+        color: htmlEl.style.color,
+        background: htmlEl.style.background,
+        webkitTextFillColor: htmlEl.style.webkitTextFillColor
+      });
+      
+      // Set solid color for PDF export
+      htmlEl.style.color = '#1f2937';
+      htmlEl.style.background = 'none';
+      htmlEl.style.webkitTextFillColor = 'initial';
+    });
+
+    // Use html2canvas to capture the element and jsPDF to create the PDF
+    html2canvas(element, { 
+      scale: 2, 
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      width: element.scrollWidth,
+      height: element.scrollHeight
+    })
+      .then((canvas) => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+
+        const imgProps = pdf.getImageProperties(imgData);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+        // If content is larger than page, split into multiple pages
+        let position = 0;
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+
+        // Add extra pages if needed
+        if (pdfHeight > pdf.internal.pageSize.getHeight()) {
+          let remainingHeight = pdfHeight - pdf.internal.pageSize.getHeight();
+          while (remainingHeight > 0) {
+            pdf.addPage();
+            position = -pdf.internal.pageSize.getHeight() * (Math.ceil((pdfHeight - remainingHeight) / pdf.internal.pageSize.getHeight()));
+            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+            remainingHeight -= pdf.internal.pageSize.getHeight();
+          }
+        }
+
+        pdf.save('dashboard.pdf');
+        
+        // Restore original gradient styles
+        originalStyles.forEach(({ element, color, background, webkitTextFillColor }) => {
+          element.style.color = color;
+          element.style.background = background;
+          element.style.webkitTextFillColor = webkitTextFillColor;
+        });
+      })
+      .catch((err) => {
+        // Restore original gradient styles even on error
+        originalStyles.forEach(({ element, color, background, webkitTextFillColor }) => {
+          element.style.color = color;
+          element.style.background = background;
+          element.style.webkitTextFillColor = webkitTextFillColor;
+        });
+        
+        // Fallback alert
+        // eslint-disable-next-line no-console
+        console.error('Failed to export PDF', err);
+        alert('Failed to export PDF. See console for details.');
+      });
   };
 
   const intentChartData = {
@@ -70,29 +151,30 @@ export default function CXReports() {
   };
 
   return (
-    <div className="p-8">
+  <div id="dashboard-root" className="p-4 sm:p-6 lg:p-8">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="flex items-center justify-between mb-6"
+        className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4"
       >
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Voice Agent Performance Dashboard</h2>
-          <p className="text-gray-600">Comprehensive analytics and insights</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Voice Agent Performance Dashboard</h2>
+          <p className="text-sm sm:text-base text-gray-600">Comprehensive analytics and insights</p>
         </div>
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleExportPDF}
-          className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg shadow-md hover:shadow-lg transition-all font-medium"
+          className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg shadow-md hover:shadow-lg transition-all font-medium text-sm sm:text-base"
         >
-          <Download size={20} />
-          Export as PDF
+          <Download size={18} className="sm:w-5 sm:h-5" />
+          <span className="hidden sm:inline">Export as PDF</span>
+          <span className="sm:hidden">Export</span>
         </motion.button>
       </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
         {[
           { label: 'Intent Recognition', value: cxReportsKPI.intentRecognition, color: 'from-blue-500 to-cyan-500' },
           { label: 'Average Response Time', value: cxReportsKPI.avgResponseTime, color: 'from-green-500 to-emerald-500' },
@@ -107,26 +189,26 @@ export default function CXReports() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
             whileHover={{ scale: 1.02, y: -4 }}
-            className="bg-white rounded-xl shadow-md p-6 border border-gray-100"
+            className="bg-white rounded-xl shadow-md p-4 sm:p-6 border border-gray-100"
           >
-            <p className="text-sm text-gray-600 font-medium mb-2">{kpi.label}</p>
-            <p className={`text-2xl font-bold bg-gradient-to-r ${kpi.color} bg-clip-text text-transparent`}>
+            <p className="text-xs sm:text-sm text-gray-600 font-medium mb-2">{kpi.label}</p>
+            <p className={`text-xl sm:text-2xl font-bold bg-gradient-to-r ${kpi.color} gradient-text`}>
               {kpi.value}
             </p>
           </motion.div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.8 }}
-          className="lg:col-span-2 bg-white rounded-xl shadow-md p-6 border border-gray-100"
+          className="lg:col-span-2 bg-white rounded-xl shadow-md p-4 sm:p-6 border border-gray-100"
         >
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Intent Accuracy</h3>
-          <p className="text-sm text-gray-600 mb-6">Calls escalated vs handled by AI</p>
-          <div className="h-80">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Intent Accuracy</h3>
+          <p className="text-xs sm:text-sm text-gray-600 mb-4 sm:mb-6">Calls escalated vs handled by AI</p>
+          <div className="h-64 sm:h-80">
             <Bar data={intentChartData} options={chartOptions} />
           </div>
         </motion.div>
@@ -135,26 +217,26 @@ export default function CXReports() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.9 }}
-          className="bg-white rounded-xl shadow-md p-6 border border-gray-100"
+          className="bg-white rounded-xl shadow-md p-4 sm:p-6 border border-gray-100"
         >
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Ticket Status by Week</h3>
-          <div className="space-y-6">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Ticket Status by Week</h3>
+          <div className="space-y-4 sm:space-y-6">
             <div>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-medium text-gray-700">Week 1</span>
+                <span className="text-xs sm:text-sm font-medium text-gray-700">Week 1</span>
               </div>
               <div className="flex gap-2">
                 <div className="flex-1">
-                  <div className="bg-blue-100 rounded-lg p-4 text-center">
-                    <div className="text-2xl font-bold text-blue-600 mb-1">
+                  <div className="bg-blue-100 rounded-lg p-3 sm:p-4 text-center">
+                    <div className="text-lg sm:text-2xl font-bold text-blue-600 mb-1">
                       {ticketStatusByWeek.week1.open}
                     </div>
                     <div className="text-xs text-blue-700 font-medium">Open</div>
                   </div>
                 </div>
                 <div className="flex-1">
-                  <div className="bg-green-100 rounded-lg p-4 text-center">
-                    <div className="text-2xl font-bold text-green-600 mb-1">
+                  <div className="bg-green-100 rounded-lg p-3 sm:p-4 text-center">
+                    <div className="text-lg sm:text-2xl font-bold text-green-600 mb-1">
                       {ticketStatusByWeek.week1.resolved}
                     </div>
                     <div className="text-xs text-green-700 font-medium">Resolved</div>
@@ -165,20 +247,20 @@ export default function CXReports() {
 
             <div>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-medium text-gray-700">Week 2</span>
+                <span className="text-xs sm:text-sm font-medium text-gray-700">Week 2</span>
               </div>
               <div className="flex gap-2">
                 <div className="flex-1">
-                  <div className="bg-blue-100 rounded-lg p-4 text-center">
-                    <div className="text-2xl font-bold text-blue-600 mb-1">
+                  <div className="bg-blue-100 rounded-lg p-3 sm:p-4 text-center">
+                    <div className="text-lg sm:text-2xl font-bold text-blue-600 mb-1">
                       {ticketStatusByWeek.week2.open}
                     </div>
                     <div className="text-xs text-blue-700 font-medium">Open</div>
                   </div>
                 </div>
                 <div className="flex-1">
-                  <div className="bg-green-100 rounded-lg p-4 text-center">
-                    <div className="text-2xl font-bold text-green-600 mb-1">
+                  <div className="bg-green-100 rounded-lg p-3 sm:p-4 text-center">
+                    <div className="text-lg sm:text-2xl font-bold text-green-600 mb-1">
                       {ticketStatusByWeek.week2.resolved}
                     </div>
                     <div className="text-xs text-green-700 font-medium">Resolved</div>

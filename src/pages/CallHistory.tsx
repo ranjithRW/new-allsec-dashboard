@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, Clock, Filter } from 'lucide-react';
+import { Calendar, Clock } from 'lucide-react';
 import { callHistoryKPI, callHistoryRecords, reportTypes } from '../data/mockData';
 
 export default function CallHistory() {
@@ -9,24 +9,24 @@ export default function CallHistory() {
   const [endTime, setEndTime] = useState('23:59');
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         className="mb-6"
       >
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Call History and Transcripts</h2>
-        <p className="text-gray-600">View and analyze all customer interactions</p>
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Call History and Transcripts</h2>
+        <p className="text-sm sm:text-base text-gray-600">View and analyze all customer interactions</p>
       </motion.div>
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        className="bg-white rounded-xl shadow-md p-6 mb-6 border border-gray-100"
+        className="bg-white rounded-xl shadow-md p-4 sm:p-6 mb-6 border border-gray-100"
       >
-        <div className="flex flex-wrap gap-4 mb-6">
+        <div className="flex flex-wrap gap-2 sm:gap-4 mb-4 sm:mb-6">
           {reportTypes.map((report, index) => (
             <motion.button
               key={report.id}
@@ -35,44 +35,44 @@ export default function CallHistory() {
               transition={{ duration: 0.3, delay: 0.3 + index * 0.05 }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className={`px-4 py-2 rounded-lg font-medium text-sm border ${report.color} transition-all`}
+              className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-xs sm:text-sm border ${report.color} transition-all`}
             >
               {report.label}
             </motion.button>
           ))}
         </div>
 
-        <div className="flex items-center gap-4 flex-wrap">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 flex-wrap">
           <div className="flex items-center gap-2">
-            <Calendar size={18} className="text-gray-500" />
-            <span className="text-sm font-medium text-gray-700">Timeline:</span>
+            <Calendar size={16} className="text-gray-500" />
+            <span className="text-xs sm:text-sm font-medium text-gray-700">Timeline:</span>
             <input
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-2 sm:px-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
           <div className="flex items-center gap-2">
-            <Clock size={18} className="text-gray-500" />
+            <Clock size={16} className="text-gray-500" />
             <input
               type="time"
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-2 sm:px-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             <span className="text-gray-500">-</span>
             <input
               type="time"
               value={endTime}
               onChange={(e) => setEndTime(e.target.value)}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-2 sm:px-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
         </div>
       </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6">
         {[
           { label: 'Total Calls', value: callHistoryKPI.totalCalls, color: 'from-blue-500 to-cyan-500' },
           { label: 'Avg Call Duration', value: callHistoryKPI.avgCallDuration, color: 'from-green-500 to-emerald-500' },
@@ -85,10 +85,10 @@ export default function CallHistory() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
             whileHover={{ scale: 1.02, y: -4 }}
-            className="bg-white rounded-xl shadow-md p-6 border border-gray-100"
+            className="bg-white rounded-xl shadow-md p-4 sm:p-6 border border-gray-100"
           >
-            <p className="text-sm text-gray-600 font-medium mb-2">{kpi.label}</p>
-            <p className="text-3xl font-bold bg-gradient-to-r ${kpi.color} bg-clip-text">
+            <p className="text-xs sm:text-sm text-gray-600 font-medium mb-2">{kpi.label}</p>
+            <p className={`text-2xl sm:text-3xl font-bold bg-gradient-to-r ${kpi.color} gradient-text`}>
               {kpi.value}
             </p>
           </motion.div>
@@ -101,19 +101,19 @@ export default function CallHistory() {
         transition={{ duration: 0.5, delay: 0.8 }}
         className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden"
       >
-        <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Call Records</h3>
+        <div className="p-4 sm:p-6 border-b border-gray-200">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900">Call Records</h3>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[600px]">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Caller</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Agent</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Duration</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Intent</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Audio</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Transcript</th>
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Caller</th>
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Agent</th>
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Duration</th>
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Intent</th>
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Audio</th>
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Transcript</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -126,24 +126,24 @@ export default function CallHistory() {
                   whileHover={{ backgroundColor: '#f9fafb' }}
                   className="transition-colors"
                 >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{record.caller}</div>
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                    <div className="text-xs sm:text-sm font-medium text-gray-900">{record.caller}</div>
                     <div className="text-xs text-gray-500">{record.date}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{record.agent}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{record.duration}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-3 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700">
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-700">{record.agent}</td>
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-700">{record.duration}</td>
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                    <span className="px-2 sm:px-3 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700">
                       {record.intent}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                    <button className="text-xs sm:text-sm text-blue-600 hover:text-blue-800 font-medium">
                       Play
                     </button>
                   </td>
-                  <td className="px-6 py-4">
-                    <p className="text-sm text-gray-700 line-clamp-2">{record.transcript}</p>
+                  <td className="px-3 sm:px-6 py-4">
+                    <p className="text-xs sm:text-sm text-gray-700 line-clamp-2">{record.transcript}</p>
                   </td>
                 </motion.tr>
               ))}
