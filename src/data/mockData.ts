@@ -316,7 +316,7 @@ export const callHistoryRecords = [
     intent: 'Change Disputes',
     audio: 'available',
     transcript: 'Customer disputed a charge of $75.00 from utility company. Agent documented dispute and initiated investigation.',
-    date: '2025-10-22 14:50'
+    date: '2025-10-24 14:50'
   },
   {
     id: '27',
@@ -326,7 +326,7 @@ export const callHistoryRecords = [
     intent: 'Due Date Changes',
     audio: 'available',
     transcript: 'Customer requested to change payment due date to the 30th of each month. Agent processed the request successfully.',
-    date: '2025-10-22 11:30'
+    date: '2025-10-2411:30'
   },
 
   // 2025-10-21 Records (2 days ago - 10 records)
@@ -338,7 +338,7 @@ export const callHistoryRecords = [
     intent: 'Auto-pay Enrollment',
     audio: 'available',
     transcript: 'Customer enrolled in auto-pay service with credit card. Agent confirmed card details and set up recurring payments.',
-    date: '2025-10-21 09:45'
+    date: '2025-10-24 09:45'
   },
   {
     id: '29',

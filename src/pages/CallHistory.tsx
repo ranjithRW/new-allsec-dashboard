@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock } from 'lucide-react';
 import { callHistoryRecords, reportTypes } from '../data/mockData';
@@ -74,8 +74,19 @@ const getTodayDate = () => {
   return `${year}-${month}-${day}`;
 };
 
+// Helper function to get stored date or default to today
+const getInitialDate = () => {
+  // Check if we have a stored date in localStorage
+  const storedDate = localStorage.getItem('callHistorySelectedDate');
+  if (storedDate) {
+    return storedDate;
+  }
+  // If no stored date, return today's date
+  return getTodayDate();
+};
+
 export default function CallHistory() {
-  const [selectedDate, setSelectedDate] = useState(getTodayDate());
+  const [selectedDate, setSelectedDate] = useState(getInitialDate());
   const [startTime, setStartTime] = useState('00:00');
   const [endTime, setEndTime] = useState('23:59');
   const [selectedIntent, setSelectedIntent] = useState<string | null>(null);
@@ -131,6 +142,28 @@ export default function CallHistory() {
   const dynamicKPIs = useMemo(() => {
     return calculateDynamicKPIs(filteredRecords);
   }, [filteredRecords]);
+
+  // Handle page refresh/reload - reset to current date if it's a fresh page load
+  useEffect(() => {
+    // Check if this is a fresh page load (no stored session data)
+    const isFreshPageLoad = !sessionStorage.getItem('callHistoryVisited');
+    
+    if (isFreshPageLoad) {
+      // Mark that we've visited this page in this session
+      sessionStorage.setItem('callHistoryVisited', 'true');
+      
+      // Reset to current date for fresh page loads
+      const todayDate = getTodayDate();
+      setSelectedDate(todayDate);
+      localStorage.setItem('callHistorySelectedDate', todayDate);
+    }
+  }, []);
+
+  // Handle date change and store in localStorage
+  const handleDateChange = (newDate: string) => {
+    setSelectedDate(newDate);
+    localStorage.setItem('callHistorySelectedDate', newDate);
+  };
 
   // Handle intent button click
   const handleIntentClick = (intent: string) => {
@@ -207,7 +240,7 @@ export default function CallHistory() {
             <input
               type="date"
               value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
+              onChange={(e) => handleDateChange(e.target.value)}
               className="px-2 sm:px-3 py-1.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
