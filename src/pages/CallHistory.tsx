@@ -7,6 +7,23 @@ export default function CallHistory() {
   const [selectedDate, setSelectedDate] = useState('2025-10-23');
   const [startTime, setStartTime] = useState('00:00');
   const [endTime, setEndTime] = useState('23:59');
+  const [selectedIntent, setSelectedIntent] = useState<string | null>(null);
+
+  // Filter call records based on selected intent
+  const filteredRecords = selectedIntent 
+    ? callHistoryRecords.filter(record => record.intent === selectedIntent)
+    : callHistoryRecords;
+
+  // Handle intent button click
+  const handleIntentClick = (intent: string) => {
+    if (selectedIntent === intent) {
+      // If clicking the same intent, clear the filter
+      setSelectedIntent(null);
+    } else {
+      // Set new intent filter
+      setSelectedIntent(intent);
+    }
+  };
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -27,19 +44,42 @@ export default function CallHistory() {
         className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6 mb-6 border border-gray-100 dark:border-gray-700"
       >
         <div className="flex flex-wrap gap-2 sm:gap-4 mb-4 sm:mb-6">
-          {reportTypes.map((report, index) => (
-            <motion.button
-              key={report.id}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3, delay: 0.3 + index * 0.05 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-xs sm:text-sm border ${report.color} transition-all`}
-            >
-              {report.label}
-            </motion.button>
-          ))}
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3, delay: 0.3 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setSelectedIntent(null)}
+            className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-xs sm:text-sm border transition-all ${
+              !selectedIntent 
+                ? 'bg-blue-100 text-blue-700 border-blue-300' 
+                : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'
+            }`}
+          >
+            All
+          </motion.button>
+          {reportTypes.map((report, index) => {
+            const isActive = selectedIntent === report.label;
+            return (
+              <motion.button
+                key={report.id}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3, delay: 0.35 + index * 0.05 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => handleIntentClick(report.label)}
+                className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-xs sm:text-sm border transition-all ${
+                  isActive 
+                    ? report.color 
+                    : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'
+                }`}
+              >
+                {report.label}
+              </motion.button>
+            );
+          })}
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 flex-wrap">
@@ -102,7 +142,14 @@ export default function CallHistory() {
         className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 overflow-hidden"
       >
         <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Call Records</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Call Records</h3>
+            {selectedIntent && (
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                Showing {filteredRecords.length} of {callHistoryRecords.length} records
+              </span>
+            )}
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[600px]">
@@ -117,7 +164,7 @@ export default function CallHistory() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {callHistoryRecords.map((record, index) => (
+              {filteredRecords.map((record, index) => (
                 <motion.tr
                   key={record.id}
                   initial={{ opacity: 0, x: -20 }}
@@ -133,7 +180,17 @@ export default function CallHistory() {
                   <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-700 dark:text-gray-300">{record.agent}</td>
                   <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-700 dark:text-gray-300">{record.duration}</td>
                   <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 sm:px-3 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700">
+                    <span className={`px-2 sm:px-3 py-1 text-xs font-medium rounded-full ${
+                      record.intent === 'Fraud Reporting' ? 'bg-blue-100 text-blue-700' :
+                      record.intent === 'Change Disputes' ? 'bg-green-100 text-green-700' :
+                      record.intent === 'Due Date Changes' ? 'bg-purple-100 text-purple-700' :
+                      record.intent === 'Credit Report Disputes' ? 'bg-amber-100 text-amber-700' :
+                      record.intent === 'Auto-pay Enrollment' ? 'bg-cyan-100 text-cyan-700' :
+                      record.intent === 'Balance Enquiry' ? 'bg-pink-100 text-pink-700' :
+                      record.intent === 'Customer Trade Lines' ? 'bg-indigo-100 text-indigo-700' :
+                      record.intent === 'T&C requests' ? 'bg-orange-100 text-orange-700' :
+                      'bg-gray-100 text-gray-700'
+                    }`}>
                       {record.intent}
                     </span>
                   </td>
