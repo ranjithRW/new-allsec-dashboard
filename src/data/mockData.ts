@@ -30,6 +30,166 @@ export const getCallsForDateRange = (startDate: string, endDate: string) => {
   });
 };
 
+// Function to get filtered intent accuracy data for a specific date
+export const getIntentAccuracyDataForDate = (date: string) => {
+  const filteredCalls = callHistoryRecords.filter(record => {
+    const recordDate = record.date.split(' ')[0];
+    return recordDate === date;
+  });
+
+  // Map actual intent names to chart labels
+  const intentMapping: { [key: string]: string } = {
+    'Fraud Reporting': 'Fraud',
+    'Change Disputes': 'Disputes',
+    'Due Date Changes': 'Late Payment',
+    'Balance Enquiry': 'Balance',
+    'Credit Report Disputes': 'Credit Report',
+    'T&C requests': 'T&C',
+    'Auto-pay Enrollment': 'Balance', // Map to Balance for simplicity
+    'Customer Trade Lines': 'Balance' // Map to Balance for simplicity
+  };
+
+  // Count calls by intent and whether they were escalated or handled by AI
+  const intentCounts: { [key: string]: { aiHandled: number; escalated: number } } = {};
+  
+  // Initialize all chart intents
+  const allIntents = ['Fraud', 'Disputes', 'Late Payment', 'Balance', 'Credit Report', 'T&C'];
+  allIntents.forEach(intent => {
+    intentCounts[intent] = { aiHandled: 0, escalated: 0 };
+  });
+
+  // Count calls for the selected date
+  filteredCalls.forEach(call => {
+    const chartIntent = intentMapping[call.intent] || 'Balance'; // Default to Balance if not mapped
+    
+    // For this example, we'll assume some calls are escalated based on duration or other factors
+    // In a real app, this would come from the actual data
+    const isEscalated = call.duration.includes('4:') || call.duration.includes('3:') || 
+                       (call.intent === 'Fraud Reporting' && Math.random() > 0.7) ||
+                       (call.intent === 'Change Disputes' && Math.random() > 0.6);
+    
+    if (isEscalated) {
+      intentCounts[chartIntent].escalated++;
+    } else {
+      intentCounts[chartIntent].aiHandled++;
+    }
+  });
+
+  return {
+    labels: allIntents,
+    aiHandled: allIntents.map(intent => intentCounts[intent].aiHandled),
+    escalated: allIntents.map(intent => intentCounts[intent].escalated)
+  };
+};
+
+// Function to get filtered sentiment data for a specific date
+export const getSentimentDataForDate = (date: string) => {
+  const filteredCalls = callHistoryRecords.filter(record => {
+    const recordDate = record.date.split(' ')[0];
+    return recordDate === date;
+  });
+
+  // For this example, we'll simulate sentiment based on call duration and intent
+  let positive = 0;
+  let neutral = 0;
+  let negative = 0;
+
+  filteredCalls.forEach(call => {
+    const duration = parseInt(call.duration.split(':')[0]);
+    
+    // Simple sentiment logic based on duration and intent
+    if (duration <= 2 && (call.intent === 'Balance Enquiry' || call.intent === 'Auto-pay Enrollment')) {
+      positive++;
+    } else if (duration >= 4 || call.intent === 'Fraud Reporting' || call.intent === 'Change Disputes') {
+      negative++;
+    } else {
+      neutral++;
+    }
+  });
+
+  const total = positive + neutral + negative;
+  if (total === 0) {
+    return {
+      labels: ['Positive', 'Neutral', 'Negative'],
+      values: [0, 0, 0],
+      colors: [
+        'rgba(34, 197, 94, 0.8)',
+        'rgba(156, 163, 175, 0.8)',
+        'rgba(239, 68, 68, 0.8)'
+      ],
+      borderColors: [
+        'rgba(34, 197, 94, 1)',
+        'rgba(156, 163, 175, 1)',
+        'rgba(239, 68, 68, 1)'
+      ]
+    };
+  }
+
+  return {
+    labels: ['Positive', 'Neutral', 'Negative'],
+    values: [
+      Math.round((positive / total) * 100),
+      Math.round((neutral / total) * 100),
+      Math.round((negative / total) * 100)
+    ],
+    colors: [
+      'rgba(34, 197, 94, 0.8)',
+      'rgba(156, 163, 175, 0.8)',
+      'rgba(239, 68, 68, 0.8)'
+    ],
+    borderColors: [
+      'rgba(34, 197, 94, 1)',
+      'rgba(156, 163, 175, 1)',
+      'rgba(239, 68, 68, 1)'
+    ]
+  };
+};
+
+// Function to get filtered KPIs for a specific date
+export const getKPIsForDate = (date: string) => {
+  const filteredCalls = callHistoryRecords.filter(record => {
+    const recordDate = record.date.split(' ')[0];
+    return recordDate === date;
+  });
+
+  if (filteredCalls.length === 0) {
+    return {
+      intentRecognition: 'No data',
+      avgResponseTime: '0 minutes',
+      cost: '$0',
+      totalCallsToday: 0,
+      avgResolutionTime: '0 minutes',
+      unassignedTickets: 0
+    };
+  }
+
+  // Calculate average response time (simplified)
+  const totalDuration = filteredCalls.reduce((sum, call) => {
+    const [minutes, seconds] = call.duration.split(':').map(Number);
+    return sum + minutes + (seconds / 60);
+  }, 0);
+  const avgResponseTime = Math.round(totalDuration / filteredCalls.length * 10) / 10;
+
+  // Calculate cost (simplified - $2 per call)
+  const cost = filteredCalls.length * 2;
+
+  // Calculate escalation rate
+  const escalatedCalls = filteredCalls.filter(call => 
+    call.duration.includes('4:') || call.duration.includes('3:') ||
+    (call.intent === 'Fraud Reporting' && Math.random() > 0.7)
+  ).length;
+  const escalationRate = Math.round((escalatedCalls / filteredCalls.length) * 100);
+
+  return {
+    intentRecognition: escalationRate < 30 ? 'UP this week' : 'DOWN this week',
+    avgResponseTime: `${avgResponseTime} minutes`,
+    cost: `$${cost}`,
+    totalCallsToday: filteredCalls.length,
+    avgResolutionTime: `${avgResponseTime + 1} minutes`,
+    unassignedTickets: Math.max(0, escalatedCalls - Math.floor(filteredCalls.length * 0.1))
+  };
+};
+
 export const intentAccuracyData = {
   labels: ['Fraud', 'Disputes', 'Late Payment', 'Balance', 'Credit Report', 'T&C'],
   aiHandled: [120, 80, 90, 150, 70, 130],

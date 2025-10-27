@@ -13,7 +13,7 @@ import {
   Legend
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
-import { cxReportsKPI, intentAccuracyData, sentimentAnalysisData, getTotalCallsForDate } from '../data/mockData';
+import { getIntentAccuracyDataForDate, getSentimentDataForDate, getKPIsForDate } from '../data/mockData';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -21,18 +21,20 @@ export default function CXReports() {
   // State for date filtering
   const [selectedDate, setSelectedDate] = useState('2025-10-23'); // Default to today
   
-  // Calculate total calls for selected date
-  const totalCallsForSelectedDate = getTotalCallsForDate(selectedDate);
+  // Get filtered data for selected date
+  const filteredKPIs = getKPIsForDate(selectedDate);
+  const filteredIntentData = getIntentAccuracyDataForDate(selectedDate);
+  const filteredSentimentData = getSentimentDataForDate(selectedDate);
   
-  // Create chart data for sentiment analysis
+  // Create chart data for sentiment analysis using filtered data
   const sentimentChartData = {
-    labels: sentimentAnalysisData.labels,
+    labels: filteredSentimentData.labels,
     datasets: [
       {
         label: 'Customer Sentiment',
-        data: sentimentAnalysisData.values,
-        backgroundColor: sentimentAnalysisData.colors,
-        borderColor: sentimentAnalysisData.borderColors,
+        data: filteredSentimentData.values,
+        backgroundColor: filteredSentimentData.colors,
+        borderColor: filteredSentimentData.borderColors,
         borderWidth: 1
       }
     ]
@@ -204,18 +206,18 @@ export default function CXReports() {
   };
 
   const intentChartData = {
-    labels: intentAccuracyData.labels,
+    labels: filteredIntentData.labels,
     datasets: [
       {
         label: 'Calls escalated',
-        data: intentAccuracyData.escalated,
+        data: filteredIntentData.escalated,
         backgroundColor: 'rgba(209, 213, 219, 0.8)',
         borderColor: 'rgba(209, 213, 219, 1)',
         borderWidth: 1
       },
       {
         label: 'vs handled by AI',
-        data: intentAccuracyData.aiHandled,
+        data: filteredIntentData.aiHandled,
         backgroundColor: 'rgba(59, 130, 246, 0.8)',
         borderColor: 'rgba(59, 130, 246, 1)',
         borderWidth: 1
@@ -291,12 +293,12 @@ export default function CXReports() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         {[
-          { label: 'Intent Recognition', value: cxReportsKPI.intentRecognition, color: 'from-blue-500 to-cyan-500' },
-          { label: 'Average Response Time', value: cxReportsKPI.avgResponseTime, color: 'from-green-500 to-emerald-500' },
-          { label: 'Cost', value: cxReportsKPI.cost, color: 'from-amber-500 to-orange-500' },
-          { label: `Total Calls (${selectedDate})`, value: totalCallsForSelectedDate, color: 'from-purple-500 to-pink-500' },
-          { label: 'Average Resolution Time', value: cxReportsKPI.avgResolutionTime, color: 'from-cyan-500 to-blue-500' },
-          { label: 'Unassigned Tickets', value: cxReportsKPI.unassignedTickets, color: 'from-red-500 to-orange-500' }
+          { label: 'Intent Recognition', value: filteredKPIs.intentRecognition, color: 'from-blue-500 to-cyan-500' },
+          { label: 'Average Response Time', value: filteredKPIs.avgResponseTime, color: 'from-green-500 to-emerald-500' },
+          { label: 'Cost', value: filteredKPIs.cost, color: 'from-amber-500 to-orange-500' },
+          { label: `Total Calls (${selectedDate})`, value: filteredKPIs.totalCallsToday, color: 'from-purple-500 to-pink-500' },
+          { label: 'Average Resolution Time', value: filteredKPIs.avgResolutionTime, color: 'from-cyan-500 to-blue-500' },
+          { label: 'Unassigned Tickets', value: filteredKPIs.unassignedTickets, color: 'from-red-500 to-orange-500' }
         ].map((kpi, index) => (
           <motion.div
             key={kpi.label}
@@ -322,7 +324,7 @@ export default function CXReports() {
           className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border border-gray-100 dark:border-gray-700"
         >
           <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">Intent Accuracy</h3>
-          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">Calls escalated vs handled by ALLsec AI</p>
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">Calls escalated vs handled by ALLsec AI for {selectedDate}</p>
           <div className="h-64 sm:h-80">
             <Bar data={intentChartData} options={chartOptions} />
           </div>
@@ -338,7 +340,7 @@ export default function CXReports() {
             Sentiment Analysis
           </h3>
           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-4">
-            Customer sentiment distribution across all interactions
+            Customer sentiment distribution for {selectedDate}
           </p>
           <div className="h-64 sm:h-80">
             <Bar data={sentimentChartData} options={sentimentChartOptions} />
