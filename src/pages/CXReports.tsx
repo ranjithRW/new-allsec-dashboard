@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
-import { Download } from 'lucide-react';
+import { Download, Calendar } from 'lucide-react';
+import { useState } from 'react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import {
@@ -12,11 +13,17 @@ import {
   Legend
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
-import { cxReportsKPI, intentAccuracyData, sentimentAnalysisData } from '../data/mockData';
+import { cxReportsKPI, intentAccuracyData, sentimentAnalysisData, getTotalCallsForDate } from '../data/mockData';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 export default function CXReports() {
+  // State for date filtering
+  const [selectedDate, setSelectedDate] = useState('2025-10-23'); // Default to today
+  
+  // Calculate total calls for selected date
+  const totalCallsForSelectedDate = getTotalCallsForDate(selectedDate);
+  
   // Create chart data for sentiment analysis
   const sentimentChartData = {
     labels: sentimentAnalysisData.labels,
@@ -258,7 +265,17 @@ export default function CXReports() {
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">Voice Agent Performance Dashboard</h2>
           <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Comprehensive analytics and insights</p>
         </div>
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 flex items-center gap-3">
+          {/* Date Filter */}
+          <div className="flex items-center gap-2">
+            <Calendar size={16} className="text-gray-600 dark:text-gray-400" />
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -277,7 +294,7 @@ export default function CXReports() {
           { label: 'Intent Recognition', value: cxReportsKPI.intentRecognition, color: 'from-blue-500 to-cyan-500' },
           { label: 'Average Response Time', value: cxReportsKPI.avgResponseTime, color: 'from-green-500 to-emerald-500' },
           { label: 'Cost', value: cxReportsKPI.cost, color: 'from-amber-500 to-orange-500' },
-          { label: 'Sentiment Analysis', value: cxReportsKPI.sentimentAnalysis, color: 'from-purple-500 to-pink-500' },
+          { label: `Total Calls (${selectedDate})`, value: totalCallsForSelectedDate, color: 'from-purple-500 to-pink-500' },
           { label: 'Average Resolution Time', value: cxReportsKPI.avgResolutionTime, color: 'from-cyan-500 to-blue-500' },
           { label: 'Unassigned Tickets', value: cxReportsKPI.unassignedTickets, color: 'from-red-500 to-orange-500' }
         ].map((kpi, index) => (

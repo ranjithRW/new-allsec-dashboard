@@ -9,9 +9,25 @@ export const cxReportsKPI = {
   intentRecognition: 'UP/Down this week',
   avgResponseTime: '1 minute',
   cost: '$1200',
-  sentimentAnalysis: 'Positive: 60%, Negative: 30%',
+  totalCallsToday: 15, // This will be dynamically calculated
   avgResolutionTime: '3 minutes',
   unassignedTickets: 5
+};
+
+// Function to get total calls for a specific date
+export const getTotalCallsForDate = (date: string): number => {
+  return callHistoryRecords.filter(record => {
+    const recordDate = record.date.split(' ')[0]; // Extract date part (YYYY-MM-DD)
+    return recordDate === date;
+  }).length;
+};
+
+// Function to get calls for date range
+export const getCallsForDateRange = (startDate: string, endDate: string) => {
+  return callHistoryRecords.filter(record => {
+    const recordDate = record.date.split(' ')[0]; // Extract date part (YYYY-MM-DD)
+    return recordDate >= startDate && recordDate <= endDate;
+  });
 };
 
 export const intentAccuracyData = {
