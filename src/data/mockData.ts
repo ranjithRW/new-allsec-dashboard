@@ -180,8 +180,28 @@ export const getKPIsForDate = (date: string) => {
   ).length;
   const escalationRate = Math.round((escalatedCalls / filteredCalls.length) * 100);
 
+  // Get current date for comparison
+  const today = new Date();
+  const selectedDate = new Date(date);
+  const isToday = selectedDate.toDateString() === today.toDateString();
+  
+  // Determine if it's a week view (you can add week filter logic here later)
+  const isWeekView = false; // For now, always day view
+
+  // Dynamic intent recognition based on time period
+  let intentRecognitionText = '';
+  if (isWeekView) {
+    intentRecognitionText = escalationRate < 30 ? 'UP this week' : 'DOWN this week';
+  } else {
+    if (isToday) {
+      intentRecognitionText = escalationRate < 30 ? 'UP today' : 'DOWN today';
+    } else {
+      intentRecognitionText = escalationRate < 30 ? 'UP on this day' : 'DOWN on this day';
+    }
+  }
+
   return {
-    intentRecognition: escalationRate < 30 ? 'UP this week' : 'DOWN this week',
+    intentRecognition: intentRecognitionText,
     avgResponseTime: `${avgResponseTime} minutes`,
     cost: `$${cost}`,
     totalCallsToday: filteredCalls.length,
