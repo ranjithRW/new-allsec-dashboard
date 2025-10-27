@@ -196,9 +196,10 @@ export const getKPIsForPeriod = (date: string, period: 'day' | 'week' | 'month' 
       intentRecognition: 'No data',
       avgResponseTime: '0 minutes',
       cost: '$0',
+      avgCostPerCall: '$0',
       totalCallsToday: 0,
       avgResolutionTime: '0 minutes',
-      unassignedTickets: 0
+      latency: '0ms'
     };
   }
 
@@ -242,6 +243,29 @@ export const getKPIsForPeriod = (date: string, period: 'day' | 'week' | 'month' 
   ).length;
   const escalationRate = Math.round((escalatedCalls / filteredCalls.length) * 100);
 
+  // Calculate latency (average response time in milliseconds)
+  const latency = filteredCalls.reduce((totalLatency, call) => {
+    const [minutes, seconds] = call.duration.split(':').map(Number);
+    const durationInMs = (minutes * 60 + seconds) * 1000;
+    
+    // Add base latency based on intent complexity
+    const baseLatency: { [key: string]: number } = {
+      'Fraud Reporting': 500,        // High priority - low latency
+      'Change Disputes': 600,        // High priority - low latency
+      'Credit Report Disputes': 800,  // Medium priority
+      'Customer Trade Lines': 1000,   // Medium priority
+      'Due Date Changes': 1200,      // Lower priority
+      'Auto-pay Enrollment': 1500,    // Lower priority
+      'Balance Enquiry': 2000,       // Standard priority
+      'T&C requests': 2500           // Lowest priority
+    };
+    
+    const intentLatency = baseLatency[call.intent] || 2000;
+    return totalLatency + intentLatency;
+  }, 0);
+  
+  const avgLatency = filteredCalls.length > 0 ? latency / filteredCalls.length : 0;
+
   // Get current date for comparison
   const today = new Date();
   const selectedDate = new Date(date);
@@ -272,7 +296,7 @@ export const getKPIsForPeriod = (date: string, period: 'day' | 'week' | 'month' 
     avgCostPerCall: `$${Math.round(avgCostPerCall * 100) / 100}`,
     totalCallsToday: filteredCalls.length,
     avgResolutionTime: `${avgResponseTime + 1} minutes`,
-    unassignedTickets: Math.max(0, escalatedCalls - Math.floor(filteredCalls.length * 0.1))
+    latency: `${Math.round(avgLatency)}ms`
   };
 };
 

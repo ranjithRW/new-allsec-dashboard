@@ -445,7 +445,7 @@ export default function CXReports() {
           { label: 'Average Response Time', value: filteredKPIs.avgResponseTime, color: 'from-green-500 to-emerald-500' },
           { label: 'Average Resolution Time', value: filteredKPIs.avgResolutionTime, color: 'from-cyan-500 to-blue-500' },
           { label: 'Total Cost', value: filteredKPIs.cost, color: 'from-amber-500 to-orange-500' },
-          { label: 'Unassigned Tickets', value: filteredKPIs.unassignedTickets, color: 'from-red-500 to-orange-500' }
+          { label: 'Latency', value: filteredKPIs.latency, color: 'from-red-500 to-orange-500' }
         ].map((kpi) => (
           <div
             key={kpi.label}
