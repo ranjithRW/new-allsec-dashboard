@@ -18,8 +18,23 @@ import { getIntentAccuracyDataForDate, getSentimentDataForDate, getKPIsForDate }
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 export default function CXReports() {
-  // State for date filtering
-  const [selectedDate, setSelectedDate] = useState('2025-10-23'); // Default to today
+  // State for date filtering with localStorage persistence
+  const [selectedDate, setSelectedDate] = useState(() => {
+    // Check if there's a saved date in localStorage
+    const savedDate = localStorage.getItem('selectedDate');
+    if (savedDate) {
+      return savedDate;
+    }
+    // If no saved date, use current date
+    const today = new Date();
+    return today.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+  });
+
+  // Update localStorage whenever selectedDate changes
+  const handleDateChange = (newDate: string) => {
+    setSelectedDate(newDate);
+    localStorage.setItem('selectedDate', newDate);
+  };
   
   // Get filtered data for selected date
   const filteredKPIs = getKPIsForDate(selectedDate);
@@ -274,7 +289,7 @@ export default function CXReports() {
             <input
               type="date"
               value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
+              onChange={(e) => handleDateChange(e.target.value)}
               className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -299,7 +314,7 @@ export default function CXReports() {
           { label: `Total Calls (${selectedDate})`, value: filteredKPIs.totalCallsToday, color: 'from-purple-500 to-pink-500' },
           { label: 'Average Resolution Time', value: filteredKPIs.avgResolutionTime, color: 'from-cyan-500 to-blue-500' },
           { label: 'Unassigned Tickets', value: filteredKPIs.unassignedTickets, color: 'from-red-500 to-orange-500' }
-        ].map((kpi, index) => (
+        ].map((kpi) => (
           <div
             key={kpi.label}
             className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border border-gray-100 dark:border-gray-700"
@@ -316,7 +331,7 @@ export default function CXReports() {
         <div
           className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border border-gray-100 dark:border-gray-700"
         >
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">Intent Accuracy</h3>
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">Intent Count</h3>
           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">Calls escalated vs handled by ALLsec AI for {selectedDate}</p>
           <div className="h-64 sm:h-80">
             <Bar data={intentChartData} options={chartOptions} />
