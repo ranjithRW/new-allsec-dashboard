@@ -440,11 +440,11 @@ export default function CXReports() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         {[
-          { label: 'Intent Recognition', value: filteredKPIs.intentRecognition, color: 'from-blue-500 to-cyan-500' },
-          { label: 'Average Response Time', value: filteredKPIs.avgResponseTime, color: 'from-green-500 to-emerald-500' },
-          { label: 'Cost', value: filteredKPIs.cost, color: 'from-amber-500 to-orange-500' },
           { label: 'Total Calls', value: filteredKPIs.totalCallsToday, color: 'from-purple-500 to-pink-500' },
+          { label: 'Avg cost per call', value: filteredKPIs.avgCostPerCall, color: 'from-blue-500 to-cyan-500' },
+          { label: 'Average Response Time', value: filteredKPIs.avgResponseTime, color: 'from-green-500 to-emerald-500' },
           { label: 'Average Resolution Time', value: filteredKPIs.avgResolutionTime, color: 'from-cyan-500 to-blue-500' },
+          { label: 'Total Cost', value: filteredKPIs.cost, color: 'from-amber-500 to-orange-500' },
           { label: 'Unassigned Tickets', value: filteredKPIs.unassignedTickets, color: 'from-red-500 to-orange-500' }
         ].map((kpi) => (
           <div

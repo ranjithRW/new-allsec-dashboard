@@ -209,8 +209,31 @@ export const getKPIsForPeriod = (date: string, period: 'day' | 'week' | 'month' 
   }, 0);
   const avgResponseTime = Math.round(totalDuration / filteredCalls.length * 10) / 10;
 
-  // Calculate cost (simplified - $2 per call)
-  const cost = filteredCalls.length * 2;
+  // Calculate dynamic cost based on call characteristics
+  const cost = filteredCalls.reduce((totalCost, call) => {
+    const [minutes, seconds] = call.duration.split(':').map(Number);
+    const durationInMinutes = minutes + (seconds / 60);
+    
+    // Base cost per minute
+    let baseCost = 0.5; // $0.50 per minute base rate
+    
+    // Adjust cost based on intent complexity
+    const intentMultipliers: { [key: string]: number } = {
+      'Fraud Reporting': 2.0,        // High complexity
+      'Change Disputes': 1.8,        // High complexity
+      'Credit Report Disputes': 1.6,  // Medium-high complexity
+      'Customer Trade Lines': 1.4,    // Medium complexity
+      'Due Date Changes': 1.2,       // Low-medium complexity
+      'Auto-pay Enrollment': 1.1,     // Low complexity
+      'Balance Enquiry': 1.0,        // Standard complexity
+      'T&C requests': 0.8            // Low complexity
+    };
+    
+    const multiplier = intentMultipliers[call.intent] || 1.0;
+    const callCost = durationInMinutes * baseCost * multiplier;
+    
+    return totalCost + callCost;
+  }, 0);
 
   // Calculate escalation rate
   const escalatedCalls = filteredCalls.filter(call => 
@@ -239,10 +262,14 @@ export const getKPIsForPeriod = (date: string, period: 'day' | 'week' | 'month' 
     }
   }
 
+  // Calculate average cost per call
+  const avgCostPerCall = filteredCalls.length > 0 ? cost / filteredCalls.length : 0;
+
   return {
     intentRecognition: intentRecognitionText,
     avgResponseTime: `${avgResponseTime} minutes`,
-    cost: `$${cost}`,
+    cost: `$${Math.round(cost * 100) / 100}`,
+    avgCostPerCall: `$${Math.round(avgCostPerCall * 100) / 100}`,
     totalCallsToday: filteredCalls.length,
     avgResolutionTime: `${avgResponseTime + 1} minutes`,
     unassignedTickets: Math.max(0, escalatedCalls - Math.floor(filteredCalls.length * 0.1))
