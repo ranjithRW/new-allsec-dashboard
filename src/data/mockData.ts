@@ -30,6 +30,32 @@ export const getCallsForDateRange = (startDate: string, endDate: string) => {
   });
 };
 
+// Function to get calls for a specific week
+export const getCallsForWeek = (date: string) => {
+  const selectedDate = new Date(date);
+  const startOfWeek = new Date(selectedDate);
+  startOfWeek.setDate(selectedDate.getDate() - selectedDate.getDay()); // Sunday
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6); // Saturday
+  
+  const startDateStr = startOfWeek.toISOString().split('T')[0];
+  const endDateStr = endOfWeek.toISOString().split('T')[0];
+  
+  return getCallsForDateRange(startDateStr, endDateStr);
+};
+
+// Function to get calls for a specific month
+export const getCallsForMonth = (date: string) => {
+  const selectedDate = new Date(date);
+  const startOfMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+  const endOfMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+  
+  const startDateStr = startOfMonth.toISOString().split('T')[0];
+  const endDateStr = endOfMonth.toISOString().split('T')[0];
+  
+  return getCallsForDateRange(startDateStr, endDateStr);
+};
+
 // Function to get filtered intent accuracy data for a specific date
 export const getIntentAccuracyDataForDate = (date: string) => {
   const filteredCalls = callHistoryRecords.filter(record => {
@@ -145,12 +171,25 @@ export const getSentimentDataForDate = (date: string) => {
   };
 };
 
-// Function to get filtered KPIs for a specific date
-export const getKPIsForDate = (date: string) => {
-  const filteredCalls = callHistoryRecords.filter(record => {
-    const recordDate = record.date.split(' ')[0];
-    return recordDate === date;
-  });
+// Function to get filtered KPIs for a specific date/period
+export const getKPIsForPeriod = (date: string, period: 'day' | 'week' | 'month' = 'day') => {
+  let filteredCalls;
+  
+  switch (period) {
+    case 'week':
+      filteredCalls = getCallsForWeek(date);
+      break;
+    case 'month':
+      filteredCalls = getCallsForMonth(date);
+      break;
+    case 'day':
+    default:
+      filteredCalls = callHistoryRecords.filter(record => {
+        const recordDate = record.date.split(' ')[0];
+        return recordDate === date;
+      });
+      break;
+  }
 
   if (filteredCalls.length === 0) {
     return {
@@ -184,15 +223,15 @@ export const getKPIsForDate = (date: string) => {
   const today = new Date();
   const selectedDate = new Date(date);
   const isToday = selectedDate.toDateString() === today.toDateString();
-  
-  // Determine if it's a week view (you can add week filter logic here later)
-  const isWeekView = false; // For now, always day view
 
   // Dynamic intent recognition based on time period
   let intentRecognitionText = '';
-  if (isWeekView) {
+  if (period === 'week') {
     intentRecognitionText = escalationRate < 30 ? 'UP this week' : 'DOWN this week';
+  } else if (period === 'month') {
+    intentRecognitionText = escalationRate < 30 ? 'UP this month' : 'DOWN this month';
   } else {
+    // Day period
     if (isToday) {
       intentRecognitionText = escalationRate < 30 ? 'UP today' : 'DOWN today';
     } else {
@@ -207,6 +246,150 @@ export const getKPIsForDate = (date: string) => {
     totalCallsToday: filteredCalls.length,
     avgResolutionTime: `${avgResponseTime + 1} minutes`,
     unassignedTickets: Math.max(0, escalatedCalls - Math.floor(filteredCalls.length * 0.1))
+  };
+};
+
+// Backward compatibility function
+export const getKPIsForDate = (date: string) => {
+  return getKPIsForPeriod(date, 'day');
+};
+
+// Function to get filtered intent accuracy data for different periods
+export const getIntentAccuracyDataForPeriod = (date: string, period: 'day' | 'week' | 'month' = 'day') => {
+  let filteredCalls;
+  
+  switch (period) {
+    case 'week':
+      filteredCalls = getCallsForWeek(date);
+      break;
+    case 'month':
+      filteredCalls = getCallsForMonth(date);
+      break;
+    case 'day':
+    default:
+      filteredCalls = callHistoryRecords.filter(record => {
+        const recordDate = record.date.split(' ')[0];
+        return recordDate === date;
+      });
+      break;
+  }
+
+  // Map actual intent names to chart labels
+  const intentMapping: { [key: string]: string } = {
+    'Fraud Reporting': 'Fraud',
+    'Change Disputes': 'Disputes',
+    'Due Date Changes': 'Late Payment',
+    'Balance Enquiry': 'Balance',
+    'Credit Report Disputes': 'Credit Report',
+    'T&C requests': 'T&C',
+    'Auto-pay Enrollment': 'Balance',
+    'Customer Trade Lines': 'Balance'
+  };
+
+  // Count calls by intent and whether they were escalated or handled by AI
+  const intentCounts: { [key: string]: { aiHandled: number; escalated: number } } = {};
+  
+  // Initialize all chart intents
+  const allIntents = ['Fraud', 'Disputes', 'Late Payment', 'Balance', 'Credit Report', 'T&C'];
+  allIntents.forEach(intent => {
+    intentCounts[intent] = { aiHandled: 0, escalated: 0 };
+  });
+
+  // Count calls for the selected period
+  filteredCalls.forEach(call => {
+    const chartIntent = intentMapping[call.intent] || 'Balance';
+    
+    const isEscalated = call.duration.includes('4:') || call.duration.includes('3:') || 
+                       (call.intent === 'Fraud Reporting' && Math.random() > 0.7) ||
+                       (call.intent === 'Change Disputes' && Math.random() > 0.6);
+    
+    if (isEscalated) {
+      intentCounts[chartIntent].escalated++;
+    } else {
+      intentCounts[chartIntent].aiHandled++;
+    }
+  });
+
+  return {
+    labels: allIntents,
+    aiHandled: allIntents.map(intent => intentCounts[intent].aiHandled),
+    escalated: allIntents.map(intent => intentCounts[intent].escalated)
+  };
+};
+
+// Function to get filtered sentiment data for different periods
+export const getSentimentDataForPeriod = (date: string, period: 'day' | 'week' | 'month' = 'day') => {
+  let filteredCalls;
+  
+  switch (period) {
+    case 'week':
+      filteredCalls = getCallsForWeek(date);
+      break;
+    case 'month':
+      filteredCalls = getCallsForMonth(date);
+      break;
+    case 'day':
+    default:
+      filteredCalls = callHistoryRecords.filter(record => {
+        const recordDate = record.date.split(' ')[0];
+        return recordDate === date;
+      });
+      break;
+  }
+
+  // For this example, we'll simulate sentiment based on call duration and intent
+  let positive = 0;
+  let neutral = 0;
+  let negative = 0;
+
+  filteredCalls.forEach(call => {
+    const duration = parseInt(call.duration.split(':')[0]);
+    
+    // Simple sentiment logic based on duration and intent
+    if (duration <= 2 && (call.intent === 'Balance Enquiry' || call.intent === 'Auto-pay Enrollment')) {
+      positive++;
+    } else if (duration >= 4 || call.intent === 'Fraud Reporting' || call.intent === 'Change Disputes') {
+      negative++;
+    } else {
+      neutral++;
+    }
+  });
+
+  const total = positive + neutral + negative;
+  if (total === 0) {
+    return {
+      labels: ['Positive', 'Neutral', 'Negative'],
+      values: [0, 0, 0],
+      colors: [
+        'rgba(34, 197, 94, 0.8)',
+        'rgba(156, 163, 175, 0.8)',
+        'rgba(239, 68, 68, 0.8)'
+      ],
+      borderColors: [
+        'rgba(34, 197, 94, 1)',
+        'rgba(156, 163, 175, 1)',
+        'rgba(239, 68, 68, 1)'
+      ]
+    };
+  }
+
+  return {
+    labels: ['Positive', 'Neutral', 'Negative'],
+    values: [
+      Math.round((positive / total) * 100),
+      Math.round((neutral / total) * 100),
+      Math.round((negative / total) * 100)
+    ],
+    colors: [
+      'rgba(34, 197, 94, 0.8)',
+      'rgba(156, 163, 175, 0.8)',
+      'rgba(239, 68, 68, 0.8)'
+    ],
+    borderColors: [
+      'rgba(34, 197, 94, 1)',
+      'rgba(156, 163, 175, 1)',
+      'rgba(239, 68, 68, 1)'
+    ]
   };
 };
 

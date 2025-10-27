@@ -13,7 +13,7 @@ import {
   Legend
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
-import { getIntentAccuracyDataForDate, getSentimentDataForDate, getKPIsForDate } from '../data/mockData';
+import { getKPIsForPeriod, getIntentAccuracyDataForPeriod, getSentimentDataForPeriod } from '../data/mockData';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -30,16 +30,102 @@ export default function CXReports() {
     return today.toISOString().split('T')[0]; // Format: YYYY-MM-DD
   });
 
+  // State for period filtering with localStorage persistence
+  const [selectedPeriod, setSelectedPeriod] = useState<'day' | 'week' | 'month'>(() => {
+    const savedPeriod = localStorage.getItem('selectedPeriod') as 'day' | 'week' | 'month';
+    return savedPeriod || 'day';
+  });
+
   // Update localStorage whenever selectedDate changes
   const handleDateChange = (newDate: string) => {
     setSelectedDate(newDate);
     localStorage.setItem('selectedDate', newDate);
   };
+
+  // Handle period change
+  const handlePeriodChange = (newPeriod: 'day' | 'week' | 'month') => {
+    setSelectedPeriod(newPeriod);
+    localStorage.setItem('selectedPeriod', newPeriod);
+    
+    // Convert current date to appropriate format for new period
+    const currentDate = new Date(selectedDate);
+    let newDate = selectedDate;
+    
+    if (newPeriod === 'month') {
+      // Convert to YYYY-MM format
+      newDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+    } else if (newPeriod === 'week') {
+      // Keep the same date for week (will be used to find the week)
+      newDate = selectedDate;
+    } else {
+      // Keep the same date for day
+      newDate = selectedDate;
+    }
+    
+    setSelectedDate(newDate);
+    localStorage.setItem('selectedDate', newDate);
+  };
+
+  // Get the appropriate input type and value based on period
+  const getDateInputProps = () => {
+    switch (selectedPeriod) {
+      case 'month':
+        return {
+          type: 'month' as const,
+          value: selectedDate.includes('-') && selectedDate.split('-').length === 2 ? selectedDate : `${new Date(selectedDate).getFullYear()}-${String(new Date(selectedDate).getMonth() + 1).padStart(2, '0')}`,
+          onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+            const monthValue = e.target.value;
+            // Convert YYYY-MM to YYYY-MM-01 for processing
+            const fullDate = `${monthValue}-01`;
+            handleDateChange(fullDate);
+          }
+        };
+      case 'week':
+        return {
+          type: 'week' as const,
+          value: (() => {
+            const date = new Date(selectedDate);
+            const year = date.getFullYear();
+            const week = getWeekNumber(date);
+            return `${year}-W${String(week).padStart(2, '0')}`;
+          })(),
+          onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+            const weekValue = e.target.value;
+            // Convert YYYY-WXX to a date within that week
+            const [year, weekStr] = weekValue.split('-W');
+            const week = parseInt(weekStr);
+            const date = getDateFromWeek(parseInt(year), week);
+            handleDateChange(date.toISOString().split('T')[0]);
+          }
+        };
+      case 'day':
+      default:
+        return {
+          type: 'date' as const,
+          value: selectedDate,
+          onChange: (e: React.ChangeEvent<HTMLInputElement>) => handleDateChange(e.target.value)
+        };
+    }
+  };
+
+  // Helper function to get week number
+  const getWeekNumber = (date: Date) => {
+    const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+    const pastDaysOfYear = (date.getTime() - firstDayOfYear.getTime()) / 86400000;
+    return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+  };
+
+  // Helper function to get date from week number
+  const getDateFromWeek = (year: number, week: number) => {
+    const firstDayOfYear = new Date(year, 0, 1);
+    const daysToAdd = (week - 1) * 7 - firstDayOfYear.getDay();
+    return new Date(firstDayOfYear.getTime() + daysToAdd * 86400000);
+  };
   
-  // Get filtered data for selected date
-  const filteredKPIs = getKPIsForDate(selectedDate);
-  const filteredIntentData = getIntentAccuracyDataForDate(selectedDate);
-  const filteredSentimentData = getSentimentDataForDate(selectedDate);
+  // Get filtered data for selected date and period
+  const filteredKPIs = getKPIsForPeriod(selectedDate, selectedPeriod);
+  const filteredIntentData = getIntentAccuracyDataForPeriod(selectedDate, selectedPeriod);
+  const filteredSentimentData = getSentimentDataForPeriod(selectedDate, selectedPeriod);
   
   // Create chart data for sentiment analysis using filtered data
   const sentimentChartData = {
@@ -283,13 +369,24 @@ export default function CXReports() {
           <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Comprehensive analytics and insights</p>
         </div>
         <div className="flex-shrink-0 flex items-center gap-3">
+          {/* Period Filter */}
+          <div className="flex items-center gap-2">
+            <select
+              value={selectedPeriod}
+              onChange={(e) => handlePeriodChange(e.target.value as 'day' | 'week' | 'month')}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="day">Day</option>
+              <option value="week">Week</option>
+              <option value="month">Month</option>
+            </select>
+          </div>
+          
           {/* Date Filter */}
           <div className="flex items-center gap-2">
             <Calendar size={16} className="text-gray-600 dark:text-gray-400" />
             <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => handleDateChange(e.target.value)}
+              {...getDateInputProps()}
               className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -311,7 +408,7 @@ export default function CXReports() {
           { label: 'Intent Recognition', value: filteredKPIs.intentRecognition, color: 'from-blue-500 to-cyan-500' },
           { label: 'Average Response Time', value: filteredKPIs.avgResponseTime, color: 'from-green-500 to-emerald-500' },
           { label: 'Cost', value: filteredKPIs.cost, color: 'from-amber-500 to-orange-500' },
-          { label: `Total Calls (${selectedDate})`, value: filteredKPIs.totalCallsToday, color: 'from-purple-500 to-pink-500' },
+          { label: `Total Calls (${selectedPeriod === 'day' ? selectedDate : selectedPeriod})`, value: filteredKPIs.totalCallsToday, color: 'from-purple-500 to-pink-500' },
           { label: 'Average Resolution Time', value: filteredKPIs.avgResolutionTime, color: 'from-cyan-500 to-blue-500' },
           { label: 'Unassigned Tickets', value: filteredKPIs.unassignedTickets, color: 'from-red-500 to-orange-500' }
         ].map((kpi) => (
@@ -332,7 +429,7 @@ export default function CXReports() {
           className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border border-gray-100 dark:border-gray-700"
         >
           <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">Intent Count</h3>
-          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">Calls escalated vs handled by ALLsec AI for {selectedDate}</p>
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">Calls escalated vs handled by ALLsec AI for {selectedPeriod === 'day' ? selectedDate : `this ${selectedPeriod}`}</p>
           <div className="h-64 sm:h-80">
             <Bar data={intentChartData} options={chartOptions} />
           </div>
@@ -345,7 +442,7 @@ export default function CXReports() {
             Sentiment Analysis
           </h3>
           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-4">
-            Customer sentiment distribution for {selectedDate}
+            Customer sentiment distribution for {selectedPeriod === 'day' ? selectedDate : `this ${selectedPeriod}`}
           </p>
           <div className="h-64 sm:h-80">
             <Bar data={sentimentChartData} options={sentimentChartOptions} />
