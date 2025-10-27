@@ -408,7 +408,7 @@ export default function CXReports() {
           { label: 'Intent Recognition', value: filteredKPIs.intentRecognition, color: 'from-blue-500 to-cyan-500' },
           { label: 'Average Response Time', value: filteredKPIs.avgResponseTime, color: 'from-green-500 to-emerald-500' },
           { label: 'Cost', value: filteredKPIs.cost, color: 'from-amber-500 to-orange-500' },
-          { label: `Total Calls (${selectedPeriod === 'day' ? selectedDate : selectedPeriod})`, value: filteredKPIs.totalCallsToday, color: 'from-purple-500 to-pink-500' },
+          { label: 'Total Calls', value: filteredKPIs.totalCallsToday, color: 'from-purple-500 to-pink-500' },
           { label: 'Average Resolution Time', value: filteredKPIs.avgResolutionTime, color: 'from-cyan-500 to-blue-500' },
           { label: 'Unassigned Tickets', value: filteredKPIs.unassignedTickets, color: 'from-red-500 to-orange-500' }
         ].map((kpi) => (
