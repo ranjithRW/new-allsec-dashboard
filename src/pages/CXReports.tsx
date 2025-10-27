@@ -317,7 +317,7 @@ export default function CXReports() {
         borderWidth: 1
       },
       {
-        label: 'vs handled by AI',
+        label: 'vs handled by ALLSec AI',
         data: filteredIntentData.aiHandled,
         backgroundColor: 'rgba(59, 130, 246, 0.8)',
         borderColor: 'rgba(59, 130, 246, 1)',
@@ -358,6 +358,41 @@ export default function CXReports() {
 
   return (
   <div id="dashboard-root" className="p-4">
+      {/* Mobile Filters - Above title on mobile only */}
+      <div className="sm:hidden mb-4">
+        <div className="flex items-center gap-2">
+          {/* Period Filter */}
+          <select
+            value={selectedPeriod}
+            onChange={(e) => handlePeriodChange(e.target.value as 'day' | 'week' | 'month')}
+            className="px-2 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent flex-shrink-0"
+          >
+            <option value="day">Day</option>
+            <option value="week">Week</option>
+            <option value="month">Month</option>
+          </select>
+          
+          {/* Date Filter */}
+          <div className="flex items-center gap-1 flex-1">
+            <Calendar size={14} className="text-gray-600 dark:text-gray-400 flex-shrink-0" />
+            <input
+              {...getDateInputProps()}
+              className="px-2 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+            />
+          </div>
+          
+          {/* Mobile Export Button */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleExportPDF}
+            className="export-pdf-button flex items-center gap-1 px-2 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg shadow-md hover:shadow-lg transition-all font-medium text-xs flex-shrink-0"
+          >
+            <Download size={14} />
+          </motion.button>
+        </div>
+      </div>
+
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -368,8 +403,8 @@ export default function CXReports() {
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">Voice Agent Performance Dashboard</h2>
           <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Comprehensive analytics and insights</p>
         </div>
-        <div className="flex-shrink-0 flex items-center gap-3">
-          {/* Period Filter */}
+        <div className="hidden sm:flex flex-shrink-0 items-center gap-3">
+          {/* Period Filter - Desktop only */}
           <div className="flex items-center gap-2">
             <select
               value={selectedPeriod}
@@ -382,7 +417,7 @@ export default function CXReports() {
             </select>
           </div>
           
-          {/* Date Filter */}
+          {/* Date Filter - Desktop only */}
           <div className="flex items-center gap-2">
             <Calendar size={16} className="text-gray-600 dark:text-gray-400" />
             <input
