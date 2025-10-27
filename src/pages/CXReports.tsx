@@ -300,27 +300,20 @@ export default function CXReports() {
           { label: 'Average Resolution Time', value: filteredKPIs.avgResolutionTime, color: 'from-cyan-500 to-blue-500' },
           { label: 'Unassigned Tickets', value: filteredKPIs.unassignedTickets, color: 'from-red-500 to-orange-500' }
         ].map((kpi, index) => (
-          <motion.div
+          <div
             key={kpi.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
-            whileHover={{ scale: 1.02, y: -4 }}
             className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border border-gray-100 dark:border-gray-700"
           >
             <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 font-medium mb-2">{kpi.label}</p>
             <p className={`text-sm sm:text-xl font-bold text-black dark:text-white`}>
               {kpi.value}
             </p>
-          </motion.div>
+          </div>
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.8 }}
+        <div
           className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border border-gray-100 dark:border-gray-700"
         >
           <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">Intent Accuracy</h3>
@@ -328,12 +321,9 @@ export default function CXReports() {
           <div className="h-64 sm:h-80">
             <Bar data={intentChartData} options={chartOptions} />
           </div>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.9 }}
+        <div
           className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border border-gray-100 dark:border-gray-700"
         >
           <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">
@@ -345,7 +335,7 @@ export default function CXReports() {
           <div className="h-64 sm:h-80">
             <Bar data={sentimentChartData} options={sentimentChartOptions} />
           </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );
