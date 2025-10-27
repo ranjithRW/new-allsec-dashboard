@@ -8,7 +8,7 @@ export const callHistoryKPI = {
 export const cxReportsKPI = {
   intentRecognition: 'UP/Down this week',
   avgResponseTime: '1 minute',
-  csatScore: '7.8/10',
+  cost: '$1200',
   sentimentAnalysis: 'Positive: 60%, Negative: 30%',
   avgResolutionTime: '3 minutes',
   unassignedTickets: 5
@@ -18,6 +18,21 @@ export const intentAccuracyData = {
   labels: ['Fraud', 'Disputes', 'Late Payment', 'Balance', 'Credit Report', 'T&C'],
   aiHandled: [120, 80, 90, 150, 70, 130],
   escalated: [30, 100, 60, 40, 50, 50]
+};
+
+export const sentimentAnalysisData = {
+  labels: ['Positive', 'Neutral', 'Negative'],
+  values: [60, 25, 15],
+  colors: [
+    'rgba(34, 197, 94, 0.8)',   // Green for Positive
+    'rgba(156, 163, 175, 0.8)', // Gray for Neutral
+    'rgba(239, 68, 68, 0.8)'    // Red for Negative
+  ],
+  borderColors: [
+    'rgba(34, 197, 94, 1)',
+    'rgba(156, 163, 175, 1)',
+    'rgba(239, 68, 68, 1)'
+  ]
 };
 
 export const ticketStatusByWeek = {

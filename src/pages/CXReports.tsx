@@ -12,37 +12,26 @@ import {
   Legend
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
-import { cxReportsKPI, intentAccuracyData, getDynamicWeekData, getCurrentWeekOfMonth } from '../data/mockData';
+import { cxReportsKPI, intentAccuracyData, sentimentAnalysisData } from '../data/mockData';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 export default function CXReports() {
-  // Get dynamic week data based on current week of month
-  const dynamicWeekData = getDynamicWeekData();
-  const currentWeek = getCurrentWeekOfMonth();
-
-  // Create chart data for ticket status by week
-  const ticketStatusChartData = {
-    labels: dynamicWeekData.map(week => week.week),
+  // Create chart data for sentiment analysis
+  const sentimentChartData = {
+    labels: sentimentAnalysisData.labels,
     datasets: [
       {
-        label: 'Open Tickets',
-        data: dynamicWeekData.map(week => week.open),
-        backgroundColor: 'rgba(59, 130, 246, 0.8)',
-        borderColor: 'rgba(59, 130, 246, 1)',
-        borderWidth: 1
-      },
-      {
-        label: 'Resolved Tickets',
-        data: dynamicWeekData.map(week => week.resolved),
-        backgroundColor: 'rgba(34, 197, 94, 0.8)',
-        borderColor: 'rgba(34, 197, 94, 1)',
+        label: 'Customer Sentiment',
+        data: sentimentAnalysisData.values,
+        backgroundColor: sentimentAnalysisData.colors,
+        borderColor: sentimentAnalysisData.borderColors,
         borderWidth: 1
       }
     ]
   };
 
-  const ticketStatusChartOptions = {
+  const sentimentChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -62,6 +51,11 @@ export default function CXReports() {
         beginAtZero: true,
         grid: {
           color: 'rgba(0, 0, 0, 0.05)'
+        },
+        ticks: {
+          callback: function(value: any) {
+            return value + '%';
+          }
         }
       },
       x: {
@@ -282,7 +276,7 @@ export default function CXReports() {
         {[
           { label: 'Intent Recognition', value: cxReportsKPI.intentRecognition, color: 'from-blue-500 to-cyan-500' },
           { label: 'Average Response Time', value: cxReportsKPI.avgResponseTime, color: 'from-green-500 to-emerald-500' },
-          { label: 'CSAT Score', value: cxReportsKPI.csatScore, color: 'from-amber-500 to-orange-500' },
+          { label: 'Cost', value: cxReportsKPI.cost, color: 'from-amber-500 to-orange-500' },
           { label: 'Sentiment Analysis', value: cxReportsKPI.sentimentAnalysis, color: 'from-purple-500 to-pink-500' },
           { label: 'Average Resolution Time', value: cxReportsKPI.avgResolutionTime, color: 'from-cyan-500 to-blue-500' },
           { label: 'Unassigned Tickets', value: cxReportsKPI.unassignedTickets, color: 'from-red-500 to-orange-500' }
@@ -311,7 +305,7 @@ export default function CXReports() {
           className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border border-gray-100 dark:border-gray-700"
         >
           <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">Intent Accuracy</h3>
-          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">Calls escalated vs handled by AI</p>
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">Calls escalated vs handled by ALLsec AI</p>
           <div className="h-64 sm:h-80">
             <Bar data={intentChartData} options={chartOptions} />
           </div>
@@ -324,13 +318,13 @@ export default function CXReports() {
           className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border border-gray-100 dark:border-gray-700"
         >
           <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Ticket Status by Week
+            Sentiment Analysis
           </h3>
           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-4">
-            Showing data for {currentWeek} week{currentWeek > 1 ? 's' : ''} of current month
+            Customer sentiment distribution across all interactions
           </p>
           <div className="h-64 sm:h-80">
-            <Bar data={ticketStatusChartData} options={ticketStatusChartOptions} />
+            <Bar data={sentimentChartData} options={sentimentChartOptions} />
           </div>
         </motion.div>
       </div>
