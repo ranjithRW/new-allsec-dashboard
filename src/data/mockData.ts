@@ -368,6 +368,68 @@ export const getIntentAccuracyDataForPeriod = (date: string, period: 'day' | 'we
   };
 };
 
+// Function to get intent count data for pie chart
+export const getIntentCountDataForPeriod = (date: string, period: 'day' | 'week' | 'month' = 'day') => {
+  let filteredCalls;
+  
+  switch (period) {
+    case 'week':
+      filteredCalls = getCallsForWeek(date);
+      break;
+    case 'month':
+      filteredCalls = getCallsForMonth(date);
+      break;
+    case 'day':
+    default:
+      filteredCalls = callHistoryRecords.filter(record => {
+        const recordDate = record.date.split(' ')[0];
+        return recordDate === date;
+      });
+      break;
+  }
+
+  // Count calls by intent
+  const intentCounts: { [key: string]: number } = {};
+  
+  filteredCalls.forEach(call => {
+    intentCounts[call.intent] = (intentCounts[call.intent] || 0) + 1;
+  });
+
+  // Create labels and data arrays
+  const labels = Object.keys(intentCounts);
+  const values = Object.values(intentCounts);
+  
+  // Define colors for different intents
+  const colors = [
+    'rgba(59, 130, 246, 0.8)',   // Blue
+    'rgba(16, 185, 129, 0.8)',    // Green
+    'rgba(245, 158, 11, 0.8)',    // Yellow
+    'rgba(239, 68, 68, 0.8)',     // Red
+    'rgba(139, 92, 246, 0.8)',    // Purple
+    'rgba(236, 72, 153, 0.8)',    // Pink
+    'rgba(6, 182, 212, 0.8)',     // Cyan
+    'rgba(34, 197, 94, 0.8)'      // Emerald
+  ];
+
+  const borderColors = [
+    'rgba(59, 130, 246, 1)',
+    'rgba(16, 185, 129, 1)',
+    'rgba(245, 158, 11, 1)',
+    'rgba(239, 68, 68, 1)',
+    'rgba(139, 92, 246, 1)',
+    'rgba(236, 72, 153, 1)',
+    'rgba(6, 182, 212, 1)',
+    'rgba(34, 197, 94, 1)'
+  ];
+
+  return {
+    labels,
+    values,
+    colors: colors.slice(0, labels.length),
+    borderColors: borderColors.slice(0, labels.length)
+  };
+};
+
 // Function to get filtered sentiment data for different periods
 export const getSentimentDataForPeriod = (date: string, period: 'day' | 'week' | 'month' = 'day') => {
   let filteredCalls;

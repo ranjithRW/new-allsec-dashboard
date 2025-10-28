@@ -10,12 +10,13 @@ import {
   BarElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  ArcElement
 } from 'chart.js';
-import { Bar } from 'react-chartjs-2';
-import { getKPIsForPeriod, getIntentAccuracyDataForPeriod, getSentimentDataForPeriod } from '../data/mockData';
+import { Bar, Pie } from 'react-chartjs-2';
+import { getKPIsForPeriod, getIntentAccuracyDataForPeriod, getSentimentDataForPeriod, getIntentCountDataForPeriod } from '../data/mockData';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
 export default function CXReports() {
   // State for date filtering with localStorage persistence
@@ -126,6 +127,7 @@ export default function CXReports() {
   const filteredKPIs = getKPIsForPeriod(selectedDate, selectedPeriod);
   const filteredIntentData = getIntentAccuracyDataForPeriod(selectedDate, selectedPeriod);
   const filteredSentimentData = getSentimentDataForPeriod(selectedDate, selectedPeriod);
+  const filteredIntentCountData = getIntentCountDataForPeriod(selectedDate, selectedPeriod);
   
   // Create chart data for sentiment analysis using filtered data
   const sentimentChartData = {
@@ -137,6 +139,20 @@ export default function CXReports() {
         backgroundColor: filteredSentimentData.colors,
         borderColor: filteredSentimentData.borderColors,
         borderWidth: 1
+      }
+    ]
+  };
+
+  // Create pie chart data for intent count
+  const intentCountChartData = {
+    labels: filteredIntentCountData.labels,
+    datasets: [
+      {
+        label: 'Intent Count',
+        data: filteredIntentCountData.values,
+        backgroundColor: filteredIntentCountData.colors,
+        borderColor: filteredIntentCountData.borderColors,
+        borderWidth: 2
       }
     ]
   };
@@ -356,6 +372,24 @@ export default function CXReports() {
     }
   };
 
+  const pieChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'right' as const,
+        labels: {
+          font: { size: 12 },
+          padding: 15,
+          usePointStyle: true
+        }
+      },
+      title: {
+        display: false
+      }
+    }
+  };
+
   return (
   <div id="dashboard-root" className="p-4">
       {/* Mobile Filters - Above title on mobile only */}
@@ -374,7 +408,7 @@ export default function CXReports() {
           
           {/* Date Filter */}
           <div className="flex items-center gap-1 flex-1">
-            <Calendar size={14} className="text-gray-600 dark:text-gray-400 flex-shrink-0" />
+            <Calendar size={14} className="text-gray-600 dark:text-white flex-shrink-0" />
             <input
               {...getDateInputProps()}
               className="px-2 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
@@ -464,9 +498,9 @@ export default function CXReports() {
           className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border border-gray-100 dark:border-gray-700"
         >
           <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">Intent Count</h3>
-          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">Calls escalated vs handled by ALLsec AI for {selectedPeriod === 'day' ? selectedDate : `this ${selectedPeriod}`}</p>
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">Distribution of call intents for {selectedPeriod === 'day' ? selectedDate : `this ${selectedPeriod}`}</p>
           <div className="h-64 sm:h-80">
-            <Bar data={intentChartData} options={chartOptions} />
+            <Pie data={intentCountChartData} options={pieChartOptions} />
           </div>
         </div>
 
