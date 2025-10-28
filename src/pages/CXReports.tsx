@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Download, Calendar } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { getKPIsForPeriod, getSentimentDataForPeriod, getIntentCountDataForPeriod } from '../data/mockData';
@@ -10,10 +10,12 @@ import BarChart from '../components/charts/BarChart';
 export default function CXReports() {
   // State for date filtering with localStorage persistence
   const [selectedDate, setSelectedDate] = useState(() => {
-    // Check if there's a saved date in localStorage
-    const savedDate = localStorage.getItem('selectedDate');
-    if (savedDate) {
-      return savedDate;
+    // Only access localStorage on client side
+    if (typeof window !== 'undefined') {
+      const savedDate = localStorage.getItem('selectedDate');
+      if (savedDate) {
+        return savedDate;
+      }
     }
     // If no saved date, use current date
     const today = new Date();
@@ -22,20 +24,27 @@ export default function CXReports() {
 
   // State for period filtering with localStorage persistence
   const [selectedPeriod, setSelectedPeriod] = useState<'day' | 'week' | 'month'>(() => {
-    const savedPeriod = localStorage.getItem('selectedPeriod') as 'day' | 'week' | 'month';
-    return savedPeriod || 'day';
+    if (typeof window !== 'undefined') {
+      const savedPeriod = localStorage.getItem('selectedPeriod') as 'day' | 'week' | 'month';
+      return savedPeriod || 'day';
+    }
+    return 'day';
   });
 
   // Update localStorage whenever selectedDate changes
-  const handleDateChange = (newDate: string) => {
+  const handleDateChange = useCallback((newDate: string) => {
     setSelectedDate(newDate);
-    localStorage.setItem('selectedDate', newDate);
-  };
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('selectedDate', newDate);
+    }
+  }, []);
 
   // Handle period change
-  const handlePeriodChange = (newPeriod: 'day' | 'week' | 'month') => {
+  const handlePeriodChange = useCallback((newPeriod: 'day' | 'week' | 'month') => {
     setSelectedPeriod(newPeriod);
-    localStorage.setItem('selectedPeriod', newPeriod);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('selectedPeriod', newPeriod);
+    }
     
     // Convert current date to appropriate format for new period
     const currentDate = new Date(selectedDate);
@@ -53,8 +62,10 @@ export default function CXReports() {
     }
     
     setSelectedDate(newDate);
-    localStorage.setItem('selectedDate', newDate);
-  };
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('selectedDate', newDate);
+    }
+  }, [selectedDate]);
 
   // Get the appropriate input type and value based on period
   const getDateInputProps = () => {

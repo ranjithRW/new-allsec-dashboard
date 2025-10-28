@@ -76,10 +76,12 @@ const getTodayDate = () => {
 
 // Helper function to get stored date or default to today
 const getInitialDate = () => {
-  // Check if we have a stored date in localStorage (shared with CX Reports)
-  const storedDate = localStorage.getItem('selectedDate');
-  if (storedDate) {
-    return storedDate;
+  // Only access localStorage on client side
+  if (typeof window !== 'undefined') {
+    const storedDate = localStorage.getItem('selectedDate');
+    if (storedDate) {
+      return storedDate;
+    }
   }
   // If no stored date, return today's date
   return getTodayDate();
@@ -145,6 +147,9 @@ export default function CallHistory() {
 
   // Handle page refresh/reload - reset to current date if it's a fresh page load
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return;
+    
     // Check if this is a fresh page load (no stored session data)
     const isFreshPageLoad = !sessionStorage.getItem('callHistoryVisited');
     
@@ -162,7 +167,9 @@ export default function CallHistory() {
   // Handle date change and store in localStorage
   const handleDateChange = (newDate: string) => {
     setSelectedDate(newDate);
-    localStorage.setItem('selectedDate', newDate);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('selectedDate', newDate);
+    }
   };
 
   // Handle intent button click

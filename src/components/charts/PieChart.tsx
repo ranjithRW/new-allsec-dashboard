@@ -5,6 +5,7 @@ import {
   Legend
 } from 'chart.js';
 import { Pie } from 'react-chartjs-2';
+import { useMemo } from 'react';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -26,7 +27,7 @@ export default function PieChart({
   description, 
   height = "h-64 sm:h-80" 
 }: PieChartProps) {
-  const chartData = {
+  const chartData = useMemo(() => ({
     labels: data.labels,
     datasets: [
       {
@@ -37,9 +38,9 @@ export default function PieChart({
         borderWidth: 2
       }
     ]
-  };
+  }), [data.labels, data.values, data.colors, data.borderColors]);
 
-  const options = {
+  const options = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -55,7 +56,7 @@ export default function PieChart({
         display: false
       }
     }
-  };
+  }), []);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border border-gray-100 dark:border-gray-700">

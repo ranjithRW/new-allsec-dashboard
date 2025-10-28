@@ -1,9 +1,21 @@
+// Cache for filtered records to prevent unnecessary recalculations
+const dateRangeCache = new Map<string, typeof callHistoryRecords>();
+
 // Function to get calls for date range
 export const getCallsForDateRange = (startDate: string, endDate: string) => {
-  return callHistoryRecords.filter(record => {
+  const cacheKey = `${startDate}-${endDate}`;
+  
+  if (dateRangeCache.has(cacheKey)) {
+    return dateRangeCache.get(cacheKey)!;
+  }
+  
+  const filteredRecords = callHistoryRecords.filter(record => {
     const recordDate = record.date.split(' ')[0]; // Extract date part (YYYY-MM-DD)
     return recordDate >= startDate && recordDate <= endDate;
   });
+  
+  dateRangeCache.set(cacheKey, filteredRecords);
+  return filteredRecords;
 };
 
 // Function to get calls for a specific week
@@ -41,8 +53,17 @@ export const getCallsForMonth = (date: string) => {
   return getCallsForDateRange(startDateStr, endDateStr);
 };
 
+// Cache for KPI calculations
+const kpiCache = new Map<string, any>();
+
 // Function to get filtered KPIs for a specific date/period
 export const getKPIsForPeriod = (date: string, period: 'day' | 'week' | 'month' = 'day') => {
+  const cacheKey = `${date}-${period}`;
+  
+  if (kpiCache.has(cacheKey)) {
+    return kpiCache.get(cacheKey);
+  }
+  
   let filteredCalls;
   
   switch (period) {
@@ -128,7 +149,7 @@ export const getKPIsForPeriod = (date: string, period: 'day' | 'week' | 'month' 
   // Calculate average cost per call
   const avgCostPerCall = filteredCalls.length > 0 ? cost / filteredCalls.length : 0;
 
-  return {
+  const result = {
     avgResponseTime: `${avgResponseTime} minutes`,
     cost: `$${Math.round(cost * 100) / 100}`,
     avgCostPerCall: `$${Math.round(avgCostPerCall * 100) / 100}`,
@@ -136,6 +157,9 @@ export const getKPIsForPeriod = (date: string, period: 'day' | 'week' | 'month' 
     avgResolutionTime: `${avgResponseTime + 1} minutes`,
     latency: `${Math.round(avgLatency)}ms`
   };
+  
+  kpiCache.set(cacheKey, result);
+  return result;
 };
 
 // Function to get intent count data for pie chart

@@ -8,6 +8,7 @@ import {
   Legend
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
+import { useMemo } from 'react';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -35,7 +36,7 @@ export default function BarChart({
   height = "h-64 sm:h-80",
   showPercentage = false
 }: BarChartProps) {
-  const options = {
+  const options = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -68,7 +69,7 @@ export default function BarChart({
         }
       }
     }
-  };
+  }), [showPercentage]);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border border-gray-100 dark:border-gray-700">
