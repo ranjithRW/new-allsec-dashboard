@@ -453,7 +453,7 @@ export default function CXReports() {
           
           {/* Date Filter - Desktop only */}
           <div className="flex items-center gap-2">
-            <Calendar size={16} className="text-gray-600 dark:text-gray-400" />
+            <Calendar size={16} className="text-gray-600 dark:text-white" />
             <input
               {...getDateInputProps()}
               className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"

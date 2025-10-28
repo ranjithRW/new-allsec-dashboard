@@ -18,3 +18,16 @@
     -webkit-text-fill-color: initial !important;
   }
 }
+
+/* Dark mode date picker icon styling */
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+.dark input[type="month"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+.dark input[type="week"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
