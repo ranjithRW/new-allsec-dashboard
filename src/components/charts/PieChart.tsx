@@ -1,23 +1,39 @@
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend
+} from 'chart.js';
 import { Pie } from 'react-chartjs-2';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 interface PieChartProps {
-  labels: string[];
-  data: number[];
-  colors: string[];
-  title: string;
+  data: {
+    labels: string[];
+    values: number[];
+    colors: string[];
+    borderColors: string[];
+  };
+  title?: string;
+  description?: string;
+  height?: string;
 }
 
-export default function PieChart({ labels, data, colors, title }: PieChartProps) {
+export default function PieChart({ 
+  data, 
+  title, 
+  description, 
+  height = "h-64 sm:h-80" 
+}: PieChartProps) {
   const chartData = {
-    labels,
+    labels: data.labels,
     datasets: [
       {
-        data,
-        backgroundColor: colors.map((color) => `${color}cc`),
-        borderColor: colors,
+        label: 'Count',
+        data: data.values,
+        backgroundColor: data.colors,
+        borderColor: data.borderColors,
         borderWidth: 2
       }
     ]
@@ -28,43 +44,32 @@ export default function PieChart({ labels, data, colors, title }: PieChartProps)
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'bottom' as const,
+        position: 'right' as const,
         labels: {
+          font: { size: 12 },
           padding: 15,
-          font: {
-            size: 13
-          },
-          usePointStyle: true,
-          pointStyle: 'circle'
+          usePointStyle: true
         }
       },
-      tooltip: {
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        padding: 12,
-        borderRadius: 8,
-        titleFont: {
-          size: 14
-        },
-        bodyFont: {
-          size: 13
-        },
-        callbacks: {
-          label: function (context: any) {
-            const label = context.label || '';
-            const value = context.parsed || 0;
-            const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
-            const percentage = ((value / total) * 100).toFixed(1);
-            return `${label}: ${value.toLocaleString()} (${percentage}%)`;
-          }
-        }
+      title: {
+        display: false
       }
     }
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
-      <div className="h-72">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border border-gray-100 dark:border-gray-700">
+      {title && (
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          {title}
+        </h3>
+      )}
+      {description && (
+        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">
+          {description}
+        </p>
+      )}
+      <div className={height}>
         <Pie data={chartData} options={options} />
       </div>
     </div>

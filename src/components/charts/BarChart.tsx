@@ -12,46 +12,42 @@ import { Bar } from 'react-chartjs-2';
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 interface BarChartProps {
-  labels: string[];
-  data: number[];
-  title: string;
+  data: {
+    labels: string[];
+    datasets: Array<{
+      label: string;
+      data: number[];
+      backgroundColor: string | string[];
+      borderColor: string | string[];
+      borderWidth: number;
+    }>;
+  };
+  title?: string;
+  description?: string;
+  height?: string;
+  showPercentage?: boolean;
 }
 
-export default function BarChart({ labels, data, title }: BarChartProps) {
-  const chartData = {
-    labels,
-    datasets: [
-      {
-        label: 'Calls',
-        data,
-        backgroundColor: 'rgba(59, 130, 246, 0.8)',
-        borderColor: 'rgba(59, 130, 246, 1)',
-        borderWidth: 1,
-        borderRadius: 8
-      }
-    ]
-  };
-
+export default function BarChart({ 
+  data, 
+  title, 
+  description, 
+  height = "h-64 sm:h-80",
+  showPercentage = false
+}: BarChartProps) {
   const options = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        display: false
+        position: 'top' as const,
+        labels: {
+          font: { size: 12 },
+          padding: 15
+        }
       },
       title: {
         display: false
-      },
-      tooltip: {
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        padding: 12,
-        borderRadius: 8,
-        titleFont: {
-          size: 14
-        },
-        bodyFont: {
-          size: 13
-        }
       }
     },
     scales: {
@@ -60,30 +56,34 @@ export default function BarChart({ labels, data, title }: BarChartProps) {
         grid: {
           color: 'rgba(0, 0, 0, 0.05)'
         },
-        ticks: {
-          font: {
-            size: 12
+        ticks: showPercentage ? {
+          callback: function(value: any) {
+            return value + '%';
           }
-        }
+        } : {}
       },
       x: {
         grid: {
           display: false
-        },
-        ticks: {
-          font: {
-            size: 12
-          }
         }
       }
     }
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
-      <div className="h-72">
-        <Bar data={chartData} options={options} />
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border border-gray-100 dark:border-gray-700">
+      {title && (
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          {title}
+        </h3>
+      )}
+      {description && (
+        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">
+          {description}
+        </p>
+      )}
+      <div className={height}>
+        <Bar data={data} options={options} />
       </div>
     </div>
   );

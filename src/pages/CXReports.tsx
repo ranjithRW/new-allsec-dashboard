@@ -3,20 +3,9 @@ import { Download, Calendar } from 'lucide-react';
 import { useState } from 'react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement
-} from 'chart.js';
-import { Bar, Pie } from 'react-chartjs-2';
-import { getKPIsForPeriod, getIntentAccuracyDataForPeriod, getSentimentDataForPeriod, getIntentCountDataForPeriod } from '../data/mockData';
-
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
+import { getKPIsForPeriod, getSentimentDataForPeriod, getIntentCountDataForPeriod } from '../data/mockData';
+import PieChart from '../components/charts/PieChart';
+import BarChart from '../components/charts/BarChart';
 
 export default function CXReports() {
   // State for date filtering with localStorage persistence
@@ -125,72 +114,9 @@ export default function CXReports() {
   
   // Get filtered data for selected date and period
   const filteredKPIs = getKPIsForPeriod(selectedDate, selectedPeriod);
-  const filteredIntentData = getIntentAccuracyDataForPeriod(selectedDate, selectedPeriod);
   const filteredSentimentData = getSentimentDataForPeriod(selectedDate, selectedPeriod);
   const filteredIntentCountData = getIntentCountDataForPeriod(selectedDate, selectedPeriod);
   
-  // Create chart data for sentiment analysis using filtered data
-  const sentimentChartData = {
-    labels: filteredSentimentData.labels,
-    datasets: [
-      {
-        label: 'Customer Sentiment',
-        data: filteredSentimentData.values,
-        backgroundColor: filteredSentimentData.colors,
-        borderColor: filteredSentimentData.borderColors,
-        borderWidth: 1
-      }
-    ]
-  };
-
-  // Create pie chart data for intent count
-  const intentCountChartData = {
-    labels: filteredIntentCountData.labels,
-    datasets: [
-      {
-        label: 'Intent Count',
-        data: filteredIntentCountData.values,
-        backgroundColor: filteredIntentCountData.colors,
-        borderColor: filteredIntentCountData.borderColors,
-        borderWidth: 2
-      }
-    ]
-  };
-
-  const sentimentChartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'top' as const,
-        labels: {
-          font: { size: 12 },
-          padding: 15
-        }
-      },
-      title: {
-        display: false
-      }
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        grid: {
-          color: 'rgba(0, 0, 0, 0.05)'
-        },
-        ticks: {
-          callback: function(value: any) {
-            return value + '%';
-          }
-        }
-      },
-      x: {
-        grid: {
-          display: false
-        }
-      }
-    }
-  };
 
   const handleExportPDF = () => {
     const element = document.getElementById('dashboard-root');
@@ -322,74 +248,6 @@ export default function CXReports() {
       });
   };
 
-  const intentChartData = {
-    labels: filteredIntentData.labels,
-    datasets: [
-      {
-        label: 'Calls escalated',
-        data: filteredIntentData.escalated,
-        backgroundColor: 'rgba(209, 213, 219, 0.8)',
-        borderColor: 'rgba(209, 213, 219, 1)',
-        borderWidth: 1
-      },
-      {
-        label: 'vs handled by ALLSec AI',
-        data: filteredIntentData.aiHandled,
-        backgroundColor: 'rgba(59, 130, 246, 0.8)',
-        borderColor: 'rgba(59, 130, 246, 1)',
-        borderWidth: 1
-      }
-    ]
-  };
-
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'top' as const,
-        labels: {
-          font: { size: 12 },
-          padding: 15
-        }
-      },
-      title: {
-        display: false
-      }
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        grid: {
-          color: 'rgba(0, 0, 0, 0.05)'
-        }
-      },
-      x: {
-        grid: {
-          display: false
-        }
-      }
-    }
-  };
-
-  const pieChartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'right' as const,
-        labels: {
-          font: { size: 12 },
-          padding: 15,
-          usePointStyle: true
-        }
-      },
-      title: {
-        display: false
-      }
-    }
-  };
-
   return (
   <div id="dashboard-root" className="p-4">
       {/* Mobile Filters - Above title on mobile only */}
@@ -494,28 +352,32 @@ export default function CXReports() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-        <div
-          className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border border-gray-100 dark:border-gray-700"
-        >
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">Intent Count</h3>
-          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">Distribution of call intents for {selectedPeriod === 'day' ? selectedDate : `this ${selectedPeriod}`}</p>
-          <div className="h-64 sm:h-80">
-            <Pie data={intentCountChartData} options={pieChartOptions} />
-          </div>
+        <div className="lg:col-span-2">
+          <PieChart
+            data={filteredIntentCountData}
+            title="Intent Count"
+            description={`Distribution of call intents for ${selectedPeriod === 'day' ? selectedDate : `this ${selectedPeriod}`}`}
+          />
         </div>
 
-        <div
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 border border-gray-100 dark:border-gray-700"
-        >
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Sentiment Analysis
-          </h3>
-          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-4">
-            Customer sentiment distribution for {selectedPeriod === 'day' ? selectedDate : `this ${selectedPeriod}`}
-          </p>
-          <div className="h-64 sm:h-80">
-            <Bar data={sentimentChartData} options={sentimentChartOptions} />
-          </div>
+        <div>
+          <BarChart
+            data={{
+              labels: filteredSentimentData.labels,
+              datasets: [
+                {
+                  label: 'Customer Sentiment',
+                  data: filteredSentimentData.values,
+                  backgroundColor: filteredSentimentData.colors,
+                  borderColor: filteredSentimentData.borderColors,
+                  borderWidth: 1
+                }
+              ]
+            }}
+            title="Sentiment Analysis"
+            description={`Customer sentiment distribution for ${selectedPeriod === 'day' ? selectedDate : `this ${selectedPeriod}`}`}
+            showPercentage={true}
+          />
         </div>
       </div>
     </div>
