@@ -254,9 +254,6 @@ export const getKPIsForPeriod = (date: string, period: 'day' | 'week' | 'month' 
 
   // Calculate latency (average response time in milliseconds)
   const latency = filteredCalls.reduce((totalLatency, call) => {
-    const [minutes, seconds] = call.duration.split(':').map(Number);
-    const durationInMs = (minutes * 60 + seconds) * 1000;
-    
     // Add base latency based on intent complexity
     const baseLatency: { [key: string]: number } = {
       'Fraud Reporting': 500,        // High priority - low latency
