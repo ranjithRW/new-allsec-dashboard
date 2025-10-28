@@ -1,0 +1,882 @@
+// Function to get calls for date range
+export const getCallsForDateRange = (startDate: string, endDate: string) => {
+  return callHistoryRecords.filter(record => {
+    const recordDate = record.date.split(' ')[0]; // Extract date part (YYYY-MM-DD)
+    return recordDate >= startDate && recordDate <= endDate;
+  });
+};
+
+// Function to get calls for a specific week
+export const getCallsForWeek = (date: string) => {
+  const selectedDate = new Date(date);
+  
+  // Calculate week number using the same logic as CXReports component
+  const firstDayOfYear = new Date(selectedDate.getFullYear(), 0, 1);
+  const pastDaysOfYear = (selectedDate.getTime() - firstDayOfYear.getTime()) / 86400000;
+  const weekNumber = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+  
+  // Get the start date of that week
+  const daysToAdd = (weekNumber - 1) * 7 - firstDayOfYear.getDay();
+  const startOfWeek = new Date(firstDayOfYear.getTime() + daysToAdd * 86400000);
+  
+  // Calculate end of week (6 days after start)
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
+  
+  const startDateStr = startOfWeek.toISOString().split('T')[0];
+  const endDateStr = endOfWeek.toISOString().split('T')[0];
+  
+  return getCallsForDateRange(startDateStr, endDateStr);
+};
+
+// Function to get calls for a specific month
+export const getCallsForMonth = (date: string) => {
+  const selectedDate = new Date(date);
+  const startOfMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+  const endOfMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+  
+  const startDateStr = startOfMonth.toISOString().split('T')[0];
+  const endDateStr = endOfMonth.toISOString().split('T')[0];
+  
+  return getCallsForDateRange(startDateStr, endDateStr);
+};
+
+// Function to get filtered KPIs for a specific date/period
+export const getKPIsForPeriod = (date: string, period: 'day' | 'week' | 'month' = 'day') => {
+  let filteredCalls;
+  
+  switch (period) {
+    case 'week':
+      filteredCalls = getCallsForWeek(date);
+      break;
+    case 'month':
+      filteredCalls = getCallsForMonth(date);
+      break;
+    case 'day':
+    default:
+      filteredCalls = callHistoryRecords.filter(record => {
+        const recordDate = record.date.split(' ')[0];
+        return recordDate === date;
+      });
+      break;
+  }
+
+  if (filteredCalls.length === 0) {
+    return {
+      avgResponseTime: '0 minutes',
+      cost: '$0',
+      avgCostPerCall: '$0',
+      totalCallsToday: 0,
+      avgResolutionTime: '0 minutes',
+      latency: '0ms'
+    };
+  }
+
+  // Calculate average response time (simplified)
+  const totalDuration = filteredCalls.reduce((sum, call) => {
+    const [minutes, seconds] = call.duration.split(':').map(Number);
+    return sum + minutes + (seconds / 60);
+  }, 0);
+  const avgResponseTime = Math.round(totalDuration / filteredCalls.length * 10) / 10;
+
+  // Calculate dynamic cost based on call characteristics
+  const cost = filteredCalls.reduce((totalCost, call) => {
+    const [minutes, seconds] = call.duration.split(':').map(Number);
+    const durationInMinutes = minutes + (seconds / 60);
+    
+    // Base cost per minute
+    let baseCost = 0.5; // $0.50 per minute base rate
+    
+    // Adjust cost based on intent complexity
+    const intentMultipliers: { [key: string]: number } = {
+      'Fraud Reporting': 2.0,        // High complexity
+      'Change Disputes': 1.8,        // High complexity
+      'Credit Report Disputes': 1.6,  // Medium-high complexity
+      'Customer Trade Lines': 1.4,    // Medium complexity
+      'Due Date Changes': 1.2,       // Low-medium complexity
+      'Auto-pay Enrollment': 1.1,     // Low complexity
+      'Balance Enquiry': 1.0,        // Standard complexity
+      'T&C requests': 0.8            // Low complexity
+    };
+    
+    const multiplier = intentMultipliers[call.intent] || 1.0;
+    const callCost = durationInMinutes * baseCost * multiplier;
+    
+    return totalCost + callCost;
+  }, 0);
+
+  // Calculate latency (average response time in milliseconds)
+  const latency = filteredCalls.reduce((totalLatency, call) => {
+    // Add base latency based on intent complexity
+    const baseLatency: { [key: string]: number } = {
+      'Fraud Reporting': 500,        // High priority - low latency
+      'Change Disputes': 600,        // High priority - low latency
+      'Credit Report Disputes': 800,  // Medium priority
+      'Customer Trade Lines': 1000,   // Medium priority
+      'Due Date Changes': 1200,      // Lower priority
+      'Auto-pay Enrollment': 1500,    // Lower priority
+      'Balance Enquiry': 2000,       // Standard priority
+      'T&C requests': 2500           // Lowest priority
+    };
+    
+    const intentLatency = baseLatency[call.intent] || 2000;
+    return totalLatency + intentLatency;
+  }, 0);
+  
+  const avgLatency = filteredCalls.length > 0 ? latency / filteredCalls.length : 0;
+
+  // Calculate average cost per call
+  const avgCostPerCall = filteredCalls.length > 0 ? cost / filteredCalls.length : 0;
+
+  return {
+    avgResponseTime: `${avgResponseTime} minutes`,
+    cost: `$${Math.round(cost * 100) / 100}`,
+    avgCostPerCall: `$${Math.round(avgCostPerCall * 100) / 100}`,
+    totalCallsToday: filteredCalls.length,
+    avgResolutionTime: `${avgResponseTime + 1} minutes`,
+    latency: `${Math.round(avgLatency)}ms`
+  };
+};
+
+// Function to get intent count data for pie chart
+export const getIntentCountDataForPeriod = (date: string, period: 'day' | 'week' | 'month' = 'day') => {
+  let filteredCalls;
+  
+  switch (period) {
+    case 'week':
+      filteredCalls = getCallsForWeek(date);
+      break;
+    case 'month':
+      filteredCalls = getCallsForMonth(date);
+      break;
+    case 'day':
+    default:
+      filteredCalls = callHistoryRecords.filter(record => {
+        const recordDate = record.date.split(' ')[0];
+        return recordDate === date;
+      });
+      break;
+  }
+
+  // Count calls by intent
+  const intentCounts: { [key: string]: number } = {};
+  
+  filteredCalls.forEach(call => {
+    intentCounts[call.intent] = (intentCounts[call.intent] || 0) + 1;
+  });
+
+  // Create labels and data arrays
+  const labels = Object.keys(intentCounts);
+  const values = Object.values(intentCounts);
+  
+  // Define colors for different intents
+  const colors = [
+    'rgba(59, 130, 246, 0.8)',   // Blue
+    'rgba(16, 185, 129, 0.8)',    // Green
+    'rgba(245, 158, 11, 0.8)',    // Yellow
+    'rgba(239, 68, 68, 0.8)',     // Red
+    'rgba(139, 92, 246, 0.8)',    // Purple
+    'rgba(236, 72, 153, 0.8)',    // Pink
+    'rgba(6, 182, 212, 0.8)',     // Cyan
+    'rgba(34, 197, 94, 0.8)'      // Emerald
+  ];
+
+  const borderColors = [
+    'rgba(59, 130, 246, 1)',
+    'rgba(16, 185, 129, 1)',
+    'rgba(245, 158, 11, 1)',
+    'rgba(239, 68, 68, 1)',
+    'rgba(139, 92, 246, 1)',
+    'rgba(236, 72, 153, 1)',
+    'rgba(6, 182, 212, 1)',
+    'rgba(34, 197, 94, 1)'
+  ];
+
+  return {
+    labels,
+    values,
+    colors: colors.slice(0, labels.length),
+    borderColors: borderColors.slice(0, labels.length)
+  };
+};
+
+// Function to get filtered sentiment data for different periods
+export const getSentimentDataForPeriod = (date: string, period: 'day' | 'week' | 'month' = 'day') => {
+  let filteredCalls;
+  
+  switch (period) {
+    case 'week':
+      filteredCalls = getCallsForWeek(date);
+      break;
+    case 'month':
+      filteredCalls = getCallsForMonth(date);
+      break;
+    case 'day':
+    default:
+      filteredCalls = callHistoryRecords.filter(record => {
+        const recordDate = record.date.split(' ')[0];
+        return recordDate === date;
+      });
+      break;
+  }
+
+  // For this example, we'll simulate sentiment based on call duration and intent
+  let positive = 0;
+  let neutral = 0;
+  let negative = 0;
+
+  filteredCalls.forEach(call => {
+    const duration = parseInt(call.duration.split(':')[0]);
+    
+    // Simple sentiment logic based on duration and intent
+    if (duration <= 2 && (call.intent === 'Balance Enquiry' || call.intent === 'Auto-pay Enrollment')) {
+      positive++;
+    } else if (duration >= 4 || call.intent === 'Fraud Reporting' || call.intent === 'Change Disputes') {
+      negative++;
+    } else {
+      neutral++;
+    }
+  });
+
+  const total = positive + neutral + negative;
+  if (total === 0) {
+    return {
+      labels: ['Positive', 'Neutral', 'Negative'],
+      values: [0, 0, 0],
+      colors: [
+        'rgba(34, 197, 94, 0.8)',
+        'rgba(156, 163, 175, 0.8)',
+        'rgba(239, 68, 68, 0.8)'
+      ],
+      borderColors: [
+        'rgba(34, 197, 94, 1)',
+        'rgba(156, 163, 175, 1)',
+        'rgba(239, 68, 68, 1)'
+      ]
+    };
+  }
+
+  return {
+    labels: ['Positive', 'Neutral', 'Negative'],
+    values: [
+      Math.round((positive / total) * 100),
+      Math.round((neutral / total) * 100),
+      Math.round((negative / total) * 100)
+    ],
+    colors: [
+      'rgba(34, 197, 94, 0.8)',
+      'rgba(156, 163, 175, 0.8)',
+      'rgba(239, 68, 68, 0.8)'
+    ],
+    borderColors: [
+      'rgba(34, 197, 94, 1)',
+      'rgba(156, 163, 175, 1)',
+      'rgba(239, 68, 68, 1)'
+    ]
+  };
+};
+
+export const callHistoryRecords = [
+  // 2025-10-23 Records (Today - 15 records)
+  {
+    id: '1',
+    caller: 'John Smith',
+    agent: 'AI Agent 1',
+    duration: '2:34',
+    intent: 'Fraud Reporting',
+    audio: 'available',
+    transcript: 'Customer reported suspicious transaction on their credit card ending in 4532. Agent verified identity and initiated fraud investigation process.',
+    date: '2025-10-23 09:15'
+  },
+  {
+    id: '2',
+    caller: 'Sarah Johnson',
+    agent: 'AI Agent 2',
+    duration: '1:12',
+    intent: 'Balance Enquiry',
+    audio: 'available',
+    transcript: 'Customer inquired about current account balance and recent transactions. Agent provided balance information and confirmed last payment received.',
+    date: '2025-10-23 10:30'
+  },
+  {
+    id: '3',
+    caller: 'Mike Wilson',
+    agent: 'AI Agent 1',
+    duration: '3:45',
+    intent: 'Change Disputes',
+    audio: 'available',
+    transcript: 'Customer disputed a charge of $129.99 from merchant XYZ. Agent documented dispute details and initiated chargeback process.',
+    date: '2025-10-23 11:45'
+  },
+  {
+    id: '4',
+    caller: 'Emma Davis',
+    agent: 'AI Agent 3',
+    duration: '1:55',
+    intent: 'Due Date Changes',
+    audio: 'available',
+    transcript: 'Customer requested to change payment due date from 15th to 1st of each month. Agent processed the request successfully.',
+    date: '2025-10-23 13:20'
+  },
+  {
+    id: '5',
+    caller: 'David Lee',
+    agent: 'AI Agent 2',
+    duration: '2:18',
+    intent: 'Auto-pay Enrollment',
+    audio: 'available',
+    transcript: 'Customer enrolled in auto-pay service. Agent confirmed bank account details and set up recurring payments.',
+    date: '2025-10-23 14:50'
+  },
+  {
+    id: '6',
+    caller: 'Lisa Brown',
+    agent: 'AI Agent 1',
+    duration: '4:12',
+    intent: 'Credit Report Disputes',
+    audio: 'available',
+    transcript: 'Customer disputed inaccurate information on their credit report. Agent initiated dispute process with credit bureau.',
+    date: '2025-10-23 08:30'
+  },
+  {
+    id: '7',
+    caller: 'Robert Taylor',
+    agent: 'AI Agent 3',
+    duration: '2:45',
+    intent: 'Customer Trade Lines',
+    audio: 'available',
+    transcript: 'Customer requested information about their trade lines and payment history. Agent provided detailed account information.',
+    date: '2025-10-23 15:30'
+  },
+  {
+    id: '8',
+    caller: 'Jennifer White',
+    agent: 'AI Agent 2',
+    duration: '1:55',
+    intent: 'T&C requests',
+    audio: 'available',
+    transcript: 'Customer requested copy of terms and conditions. Agent provided updated T&C document via email.',
+    date: '2025-10-23 11:20'
+  },
+  {
+    id: '9',
+    caller: 'Michael Chen',
+    agent: 'AI Agent 1',
+    duration: '3:30',
+    intent: 'Fraud Reporting',
+    audio: 'available',
+    transcript: 'Customer reported unauthorized charges on their account. Agent immediately blocked the card and initiated fraud investigation.',
+    date: '2025-10-23 16:10'
+  },
+  {
+    id: '10',
+    caller: 'Amanda Garcia',
+    agent: 'AI Agent 3',
+    duration: '1:45',
+    intent: 'Balance Enquiry',
+    audio: 'available',
+    transcript: 'Customer checked their current balance and recent transactions. Agent confirmed account status and provided transaction history.',
+    date: '2025-10-23 14:25'
+  },
+  {
+    id: '11',
+    caller: 'James Wilson',
+    agent: 'AI Agent 2',
+    duration: '2:15',
+    intent: 'Change Disputes',
+    audio: 'available',
+    transcript: 'Customer disputed a charge of $89.99 from online retailer. Agent documented the dispute and initiated investigation.',
+    date: '2025-10-23 12:45'
+  },
+  {
+    id: '12',
+    caller: 'Maria Rodriguez',
+    agent: 'AI Agent 1',
+    duration: '1:30',
+    intent: 'Due Date Changes',
+    audio: 'available',
+    transcript: 'Customer requested to change payment due date to the 25th of each month. Agent processed the request.',
+    date: '2025-10-23 17:20'
+  },
+  {
+    id: '13',
+    caller: 'Kevin Thompson',
+    agent: 'AI Agent 3',
+    duration: '3:20',
+    intent: 'Auto-pay Enrollment',
+    audio: 'available',
+    transcript: 'Customer enrolled in auto-pay service with checking account. Agent confirmed bank details and set up recurring payments.',
+    date: '2025-10-23 10:15'
+  },
+  {
+    id: '14',
+    caller: 'Rachel Green',
+    agent: 'AI Agent 2',
+    duration: '2:50',
+    intent: 'Credit Report Disputes',
+    audio: 'available',
+    transcript: 'Customer disputed late payment mark on credit report. Agent initiated dispute process with credit bureau.',
+    date: '2025-10-23 13:45'
+  },
+  {
+    id: '15',
+    caller: 'Tom Anderson',
+    agent: 'AI Agent 1',
+    duration: '1:25',
+    intent: 'Customer Trade Lines',
+    audio: 'available',
+    transcript: 'Customer requested information about their payment history and trade line status. Agent provided account details.',
+    date: '2025-10-23 16:30'
+  },
+
+  // 2025-10-22 Records (Yesterday - 12 records)
+  {
+    id: '16',
+    caller: 'Susan Miller',
+    agent: 'AI Agent 3',
+    duration: '2:10',
+    intent: 'Fraud Reporting',
+    audio: 'available',
+    transcript: 'Customer reported suspicious activity on their account. Agent verified identity and initiated fraud investigation.',
+    date: '2025-10-22 09:30'
+  },
+  {
+    id: '17',
+    caller: 'Daniel Kim',
+    agent: 'AI Agent 2',
+    duration: '1:40',
+    intent: 'Balance Enquiry',
+    audio: 'available',
+    transcript: 'Customer inquired about current account balance and recent transactions. Agent provided balance information.',
+    date: '2025-10-22 11:15'
+  },
+  {
+    id: '18',
+    caller: 'Patricia Johnson',
+    agent: 'AI Agent 1',
+    duration: '3:15',
+    intent: 'Change Disputes',
+    audio: 'available',
+    transcript: 'Customer disputed a charge of $199.99 from subscription service. Agent documented dispute and initiated chargeback.',
+    date: '2025-10-22 14:20'
+  },
+  {
+    id: '19',
+    caller: 'Mark Davis',
+    agent: 'AI Agent 3',
+    duration: '2:35',
+    intent: 'Due Date Changes',
+    audio: 'available',
+    transcript: 'Customer requested to change payment due date from 1st to 15th of each month. Agent processed the request.',
+    date: '2025-10-22 16:45'
+  },
+  {
+    id: '20',
+    caller: 'Linda Brown',
+    agent: 'AI Agent 2',
+    duration: '1:55',
+    intent: 'Auto-pay Enrollment',
+    audio: 'available',
+    transcript: 'Customer enrolled in auto-pay service with savings account. Agent confirmed account details and set up payments.',
+    date: '2025-10-22 08:15'
+  },
+  {
+    id: '21',
+    caller: 'Christopher Lee',
+    agent: 'AI Agent 1',
+    duration: '4:20',
+    intent: 'Credit Report Disputes',
+    audio: 'available',
+    transcript: 'Customer disputed multiple inaccuracies on credit report. Agent initiated comprehensive dispute process.',
+    date: '2025-10-22 13:30'
+  },
+  {
+    id: '22',
+    caller: 'Nancy Wilson',
+    agent: 'AI Agent 3',
+    duration: '2:05',
+    intent: 'Customer Trade Lines',
+    audio: 'available',
+    transcript: 'Customer requested detailed information about their trade lines. Agent provided comprehensive account history.',
+    date: '2025-10-22 15:10'
+  },
+  {
+    id: '23',
+    caller: 'Steven Garcia',
+    agent: 'AI Agent 2',
+    duration: '1:30',
+    intent: 'T&C requests',
+    audio: 'available',
+    transcript: 'Customer requested updated terms and conditions document. Agent provided latest T&C via email.',
+    date: '2025-10-22 10:45'
+  },
+  {
+    id: '24',
+    caller: 'Karen Martinez',
+    agent: 'AI Agent 1',
+    duration: '3:45',
+    intent: 'Fraud Reporting',
+    audio: 'available',
+    transcript: 'Customer reported unauthorized transactions totaling $500. Agent immediately blocked account and initiated investigation.',
+    date: '2025-10-22 17:25'
+  },
+  {
+    id: '25',
+    caller: 'Paul Thompson',
+    agent: 'AI Agent 3',
+    duration: '1:20',
+    intent: 'Balance Enquiry',
+    audio: 'available',
+    transcript: 'Customer checked account balance and recent activity. Agent confirmed current balance and transaction history.',
+    date: '2025-10-22 12:00'
+  },
+  {
+    id: '26',
+    caller: 'Donna White',
+    agent: 'AI Agent 2',
+    duration: '2:30',
+    intent: 'Change Disputes',
+    audio: 'available',
+    transcript: 'Customer disputed a charge of $75.00 from utility company. Agent documented dispute and initiated investigation.',
+    date: '2025-10-22 14:50'
+  },
+  {
+    id: '27',
+    caller: 'Richard Anderson',
+    agent: 'AI Agent 1',
+    duration: '1:45',
+    intent: 'Due Date Changes',
+    audio: 'available',
+    transcript: 'Customer requested to change payment due date to the 30th of each month. Agent processed the request successfully.',
+    date: '2025-10-22 11:30'
+  },
+
+  // 2025-10-24 Records (Tomorrow - 8 records)
+  {
+    id: '51',
+    caller: 'Alice Johnson',
+    agent: 'AI Agent 1',
+    duration: '2:20',
+    intent: 'Fraud Reporting',
+    audio: 'available',
+    transcript: 'Customer reported suspicious activity on their account. Agent verified identity and initiated fraud investigation.',
+    date: '2025-10-24 09:15'
+  },
+  {
+    id: '52',
+    caller: 'Bob Smith',
+    agent: 'AI Agent 2',
+    duration: '1:35',
+    intent: 'Balance Enquiry',
+    audio: 'available',
+    transcript: 'Customer inquired about current account balance and recent transactions. Agent provided balance information.',
+    date: '2025-10-24 10:45'
+  },
+  {
+    id: '53',
+    caller: 'Carol Davis',
+    agent: 'AI Agent 3',
+    duration: '3:10',
+    intent: 'Change Disputes',
+    audio: 'available',
+    transcript: 'Customer disputed a charge of $199.99 from subscription service. Agent documented dispute and initiated chargeback.',
+    date: '2025-10-24 14:20'
+  },
+  {
+    id: '54',
+    caller: 'David Wilson',
+    agent: 'AI Agent 1',
+    duration: '1:50',
+    intent: 'Due Date Changes',
+    audio: 'available',
+    transcript: 'Customer requested to change payment due date from 1st to 15th of each month. Agent processed the request.',
+    date: '2025-10-24 16:30'
+  },
+  {
+    id: '55',
+    caller: 'Eva Brown',
+    agent: 'AI Agent 2',
+    duration: '2:15',
+    intent: 'Auto-pay Enrollment',
+    audio: 'available',
+    transcript: 'Customer enrolled in auto-pay service with savings account. Agent confirmed account details and set up payments.',
+    date: '2025-10-24 11:20'
+  },
+  {
+    id: '56',
+    caller: 'Frank Miller',
+    agent: 'AI Agent 3',
+    duration: '4:05',
+    intent: 'Credit Report Disputes',
+    audio: 'available',
+    transcript: 'Customer disputed multiple inaccuracies on credit report. Agent initiated comprehensive dispute process.',
+    date: '2025-10-24 13:45'
+  },
+  {
+    id: '57',
+    caller: 'Grace Taylor',
+    agent: 'AI Agent 1',
+    duration: '2:40',
+    intent: 'Customer Trade Lines',
+    audio: 'available',
+    transcript: 'Customer requested detailed information about their trade lines. Agent provided comprehensive account history.',
+    date: '2025-10-24 15:10'
+  },
+  {
+    id: '58',
+    caller: 'Henry Garcia',
+    agent: 'AI Agent 2',
+    duration: '1:25',
+    intent: 'T&C requests',
+    audio: 'available',
+    transcript: 'Customer requested updated terms and conditions document. Agent provided latest T&C via email.',
+    date: '2025-10-24 12:00'
+  },
+
+  // 2025-10-21 Records (2 days ago - 10 records)
+  {
+    id: '28',
+    caller: 'Betty Clark',
+    agent: 'AI Agent 3',
+    duration: '2:15',
+    intent: 'Auto-pay Enrollment',
+    audio: 'available',
+    transcript: 'Customer enrolled in auto-pay service with credit card. Agent confirmed card details and set up recurring payments.',
+    date: '2025-10-21 09:45'
+  },
+  {
+    id: '29',
+    caller: 'William Taylor',
+    agent: 'AI Agent 2',
+    duration: '3:30',
+    intent: 'Credit Report Disputes',
+    audio: 'available',
+    transcript: 'Customer disputed collection account on credit report. Agent initiated dispute process with collection agency.',
+    date: '2025-10-21 13:15'
+  },
+  {
+    id: '30',
+    caller: 'Helen Rodriguez',
+    agent: 'AI Agent 1',
+    duration: '1:50',
+    intent: 'Customer Trade Lines',
+    audio: 'available',
+    transcript: 'Customer requested information about their payment history. Agent provided detailed trade line information.',
+    date: '2025-10-21 15:30'
+  },
+  {
+    id: '31',
+    caller: 'George Miller',
+    agent: 'AI Agent 3',
+    duration: '2:40',
+    intent: 'T&C requests',
+    audio: 'available',
+    transcript: 'Customer requested copy of terms and conditions. Agent provided updated T&C document and explained key changes.',
+    date: '2025-10-21 11:20'
+  },
+  {
+    id: '32',
+    caller: 'Dorothy Wilson',
+    agent: 'AI Agent 2',
+    duration: '4:15',
+    intent: 'Fraud Reporting',
+    audio: 'available',
+    transcript: 'Customer reported multiple unauthorized charges. Agent immediately blocked all cards and initiated comprehensive fraud investigation.',
+    date: '2025-10-21 16:10'
+  },
+  {
+    id: '33',
+    caller: 'Charles Brown',
+    agent: 'AI Agent 1',
+    duration: '1:25',
+    intent: 'Balance Enquiry',
+    audio: 'available',
+    transcript: 'Customer inquired about account balance and recent transactions. Agent provided current balance information.',
+    date: '2025-10-21 10:30'
+  },
+  {
+    id: '34',
+    caller: 'Ruth Davis',
+    agent: 'AI Agent 3',
+    duration: '2:55',
+    intent: 'Change Disputes',
+    audio: 'available',
+    transcript: 'Customer disputed a charge of $150.00 from merchant. Agent documented dispute details and initiated chargeback process.',
+    date: '2025-10-21 14:45'
+  },
+  {
+    id: '35',
+    caller: 'Frank Garcia',
+    agent: 'AI Agent 2',
+    duration: '1:35',
+    intent: 'Due Date Changes',
+    audio: 'available',
+    transcript: 'Customer requested to change payment due date to the 20th of each month. Agent processed the request.',
+    date: '2025-10-21 12:15'
+  },
+  {
+    id: '36',
+    caller: 'Shirley Martinez',
+    agent: 'AI Agent 1',
+    duration: '3:20',
+    intent: 'Auto-pay Enrollment',
+    audio: 'available',
+    transcript: 'Customer enrolled in auto-pay service with checking account. Agent confirmed bank details and set up automatic payments.',
+    date: '2025-10-21 17:30'
+  },
+  {
+    id: '37',
+    caller: 'Raymond Thompson',
+    agent: 'AI Agent 3',
+    duration: '2:10',
+    intent: 'Credit Report Disputes',
+    audio: 'available',
+    transcript: 'Customer disputed late payment notation on credit report. Agent initiated dispute process with credit bureau.',
+    date: '2025-10-21 15:00'
+  },
+
+  // 2025-10-20 Records (3 days ago - 8 records)
+  {
+    id: '38',
+    caller: 'Evelyn White',
+    agent: 'AI Agent 2',
+    duration: '1:40',
+    intent: 'Customer Trade Lines',
+    audio: 'available',
+    transcript: 'Customer requested information about their account status. Agent provided trade line details and payment history.',
+    date: '2025-10-20 14:25'
+  },
+  {
+    id: '39',
+    caller: 'Harold Anderson',
+    agent: 'AI Agent 1',
+    duration: '2:25',
+    intent: 'T&C requests',
+    audio: 'available',
+    transcript: 'Customer requested updated terms and conditions. Agent provided latest T&C document and highlighted key changes.',
+    date: '2025-10-20 11:45'
+  },
+  {
+    id: '40',
+    caller: 'Mildred Clark',
+    agent: 'AI Agent 3',
+    duration: '3:50',
+    intent: 'Fraud Reporting',
+    audio: 'available',
+    transcript: 'Customer reported suspicious activity and unauthorized transactions. Agent immediately secured account and initiated fraud investigation.',
+    date: '2025-10-20 16:20'
+  },
+  {
+    id: '41',
+    caller: 'Arthur Taylor',
+    agent: 'AI Agent 2',
+    duration: '1:15',
+    intent: 'Balance Enquiry',
+    audio: 'available',
+    transcript: 'Customer checked current account balance. Agent provided balance information and recent transaction summary.',
+    date: '2025-10-20 09:30'
+  },
+  {
+    id: '42',
+    caller: 'Lois Rodriguez',
+    agent: 'AI Agent 1',
+    duration: '2:35',
+    intent: 'Change Disputes',
+    audio: 'available',
+    transcript: 'Customer disputed a charge of $299.99 from subscription service. Agent documented dispute and initiated chargeback process.',
+    date: '2025-10-20 13:15'
+  },
+  {
+    id: '43',
+    caller: 'Albert Miller',
+    agent: 'AI Agent 3',
+    duration: '1:50',
+    intent: 'Due Date Changes',
+    audio: 'available',
+    transcript: 'Customer requested to change payment due date to the 5th of each month. Agent processed the request successfully.',
+    date: '2025-10-20 15:40'
+  },
+  {
+    id: '44',
+    caller: 'Frances Wilson',
+    agent: 'AI Agent 2',
+    duration: '2:20',
+    intent: 'Auto-pay Enrollment',
+    audio: 'available',
+    transcript: 'Customer enrolled in auto-pay service with savings account. Agent confirmed account details and set up recurring payments.',
+    date: '2025-10-20 10:15'
+  },
+  {
+    id: '45',
+    caller: 'Louis Brown',
+    agent: 'AI Agent 1',
+    duration: '3:10',
+    intent: 'Credit Report Disputes',
+    audio: 'available',
+    transcript: 'Customer disputed multiple inaccuracies on credit report. Agent initiated comprehensive dispute process with credit bureau.',
+    date: '2025-10-20 14:50'
+  },
+
+  // 2025-10-19 Records (4 days ago - 5 records)
+  {
+    id: '46',
+    caller: 'Virginia Davis',
+    agent: 'AI Agent 3',
+    duration: '1:30',
+    intent: 'Customer Trade Lines',
+    audio: 'available',
+    transcript: 'Customer requested information about their payment history. Agent provided detailed trade line information.',
+    date: '2025-10-19 12:30'
+  },
+  {
+    id: '47',
+    caller: 'Howard Garcia',
+    agent: 'AI Agent 2',
+    duration: '2:45',
+    intent: 'T&C requests',
+    audio: 'available',
+    transcript: 'Customer requested copy of terms and conditions. Agent provided updated T&C document via email.',
+    date: '2025-10-19 15:20'
+  },
+  {
+    id: '48',
+    caller: 'Ruth Martinez',
+    agent: 'AI Agent 1',
+    duration: '4:25',
+    intent: 'Fraud Reporting',
+    audio: 'available',
+    transcript: 'Customer reported extensive unauthorized activity on multiple accounts. Agent immediately secured all accounts and initiated comprehensive fraud investigation.',
+    date: '2025-10-19 17:45'
+  },
+  {
+    id: '49',
+    caller: 'Eugene Thompson',
+    agent: 'AI Agent 3',
+    duration: '1:55',
+    intent: 'Balance Enquiry',
+    audio: 'available',
+    transcript: 'Customer inquired about current account balance and recent transactions. Agent provided balance information and transaction history.',
+    date: '2025-10-19 11:10'
+  },
+  {
+    id: '50',
+    caller: 'Marie White',
+    agent: 'AI Agent 2',
+    duration: '2:15',
+    intent: 'Change Disputes',
+    audio: 'available',
+    transcript: 'Customer disputed a charge of $89.99 from online retailer. Agent documented dispute details and initiated investigation.',
+    date: '2025-10-19 14:00'
+  }
+];
+
+export const reportTypes = [
+  { id: 'fraud', label: 'Fraud Reporting', color: 'bg-blue-100 text-blue-700 border-blue-300' },
+  { id: 'disputes', label: 'Change Disputes', color: 'bg-green-100 text-green-700 border-green-300' },
+  { id: 'due-date', label: 'Due Date Changes', color: 'bg-purple-100 text-purple-700 border-purple-300' },
+  { id: 'credit-report', label: 'Credit Report Disputes', color: 'bg-amber-100 text-amber-700 border-amber-300' },
+  { id: 'auto-pay', label: 'Auto-pay enrollment', color: 'bg-cyan-100 text-cyan-700 border-cyan-300' },
+  { id: 'balance', label: 'Balance Enquiry', color: 'bg-pink-100 text-pink-700 border-pink-300' },
+  { id: 'customer-trade', label: 'Customer Trade Lines', color: 'bg-indigo-100 text-indigo-700 border-indigo-300' },
+  { id: 'tnc', label: 'T&C requests', color: 'bg-orange-100 text-orange-700 border-orange-300' }
+];
