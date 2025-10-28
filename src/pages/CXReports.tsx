@@ -399,7 +399,7 @@ export default function CXReports() {
           <select
             value={selectedPeriod}
             onChange={(e) => handlePeriodChange(e.target.value as 'day' | 'week' | 'month')}
-            className="px-2 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent flex-shrink-0"
+            className="px-2 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-xs flex-shrink-0"
           >
             <option value="day">Day</option>
             <option value="week">Week</option>
@@ -411,7 +411,7 @@ export default function CXReports() {
             <Calendar size={14} className="text-gray-600 dark:text-white flex-shrink-0" />
             <input
               {...getDateInputProps()}
-              className="px-2 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+              className="px-2 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-xs w-full"
             />
           </div>
           
@@ -443,7 +443,7 @@ export default function CXReports() {
             <select
               value={selectedPeriod}
               onChange={(e) => handlePeriodChange(e.target.value as 'day' | 'week' | 'month')}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
             >
               <option value="day">Day</option>
               <option value="week">Week</option>
@@ -456,7 +456,7 @@ export default function CXReports() {
             <Calendar size={16} className="text-gray-600 dark:text-white" />
             <input
               {...getDateInputProps()}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
             />
           </div>
           <motion.button
