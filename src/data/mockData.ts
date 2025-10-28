@@ -33,10 +33,19 @@ export const getCallsForDateRange = (startDate: string, endDate: string) => {
 // Function to get calls for a specific week
 export const getCallsForWeek = (date: string) => {
   const selectedDate = new Date(date);
-  const startOfWeek = new Date(selectedDate);
-  startOfWeek.setDate(selectedDate.getDate() - selectedDate.getDay()); // Sunday
+  
+  // Calculate week number using the same logic as CXReports component
+  const firstDayOfYear = new Date(selectedDate.getFullYear(), 0, 1);
+  const pastDaysOfYear = (selectedDate.getTime() - firstDayOfYear.getTime()) / 86400000;
+  const weekNumber = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+  
+  // Get the start date of that week
+  const daysToAdd = (weekNumber - 1) * 7 - firstDayOfYear.getDay();
+  const startOfWeek = new Date(firstDayOfYear.getTime() + daysToAdd * 86400000);
+  
+  // Calculate end of week (6 days after start)
   const endOfWeek = new Date(startOfWeek);
-  endOfWeek.setDate(startOfWeek.getDate() + 6); // Saturday
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
   
   const startDateStr = startOfWeek.toISOString().split('T')[0];
   const endDateStr = endOfWeek.toISOString().split('T')[0];
@@ -823,7 +832,7 @@ export const callHistoryRecords = [
     intent: 'Change Disputes',
     audio: 'available',
     transcript: 'Customer disputed a charge of $75.00 from utility company. Agent documented dispute and initiated investigation.',
-    date: '2025-10-24 14:50'
+    date: '2025-10-22 14:50'
   },
   {
     id: '27',
@@ -833,7 +842,89 @@ export const callHistoryRecords = [
     intent: 'Due Date Changes',
     audio: 'available',
     transcript: 'Customer requested to change payment due date to the 30th of each month. Agent processed the request successfully.',
-    date: '2025-10-2411:30'
+    date: '2025-10-22 11:30'
+  },
+
+  // 2025-10-24 Records (Tomorrow - 8 records)
+  {
+    id: '51',
+    caller: 'Alice Johnson',
+    agent: 'AI Agent 1',
+    duration: '2:20',
+    intent: 'Fraud Reporting',
+    audio: 'available',
+    transcript: 'Customer reported suspicious activity on their account. Agent verified identity and initiated fraud investigation.',
+    date: '2025-10-24 09:15'
+  },
+  {
+    id: '52',
+    caller: 'Bob Smith',
+    agent: 'AI Agent 2',
+    duration: '1:35',
+    intent: 'Balance Enquiry',
+    audio: 'available',
+    transcript: 'Customer inquired about current account balance and recent transactions. Agent provided balance information.',
+    date: '2025-10-24 10:45'
+  },
+  {
+    id: '53',
+    caller: 'Carol Davis',
+    agent: 'AI Agent 3',
+    duration: '3:10',
+    intent: 'Change Disputes',
+    audio: 'available',
+    transcript: 'Customer disputed a charge of $199.99 from subscription service. Agent documented dispute and initiated chargeback.',
+    date: '2025-10-24 14:20'
+  },
+  {
+    id: '54',
+    caller: 'David Wilson',
+    agent: 'AI Agent 1',
+    duration: '1:50',
+    intent: 'Due Date Changes',
+    audio: 'available',
+    transcript: 'Customer requested to change payment due date from 1st to 15th of each month. Agent processed the request.',
+    date: '2025-10-24 16:30'
+  },
+  {
+    id: '55',
+    caller: 'Eva Brown',
+    agent: 'AI Agent 2',
+    duration: '2:15',
+    intent: 'Auto-pay Enrollment',
+    audio: 'available',
+    transcript: 'Customer enrolled in auto-pay service with savings account. Agent confirmed account details and set up payments.',
+    date: '2025-10-24 11:20'
+  },
+  {
+    id: '56',
+    caller: 'Frank Miller',
+    agent: 'AI Agent 3',
+    duration: '4:05',
+    intent: 'Credit Report Disputes',
+    audio: 'available',
+    transcript: 'Customer disputed multiple inaccuracies on credit report. Agent initiated comprehensive dispute process.',
+    date: '2025-10-24 13:45'
+  },
+  {
+    id: '57',
+    caller: 'Grace Taylor',
+    agent: 'AI Agent 1',
+    duration: '2:40',
+    intent: 'Customer Trade Lines',
+    audio: 'available',
+    transcript: 'Customer requested detailed information about their trade lines. Agent provided comprehensive account history.',
+    date: '2025-10-24 15:10'
+  },
+  {
+    id: '58',
+    caller: 'Henry Garcia',
+    agent: 'AI Agent 2',
+    duration: '1:25',
+    intent: 'T&C requests',
+    audio: 'available',
+    transcript: 'Customer requested updated terms and conditions document. Agent provided latest T&C via email.',
+    date: '2025-10-24 12:00'
   },
 
   // 2025-10-21 Records (2 days ago - 10 records)
@@ -845,7 +936,7 @@ export const callHistoryRecords = [
     intent: 'Auto-pay Enrollment',
     audio: 'available',
     transcript: 'Customer enrolled in auto-pay service with credit card. Agent confirmed card details and set up recurring payments.',
-    date: '2025-10-24 09:45'
+    date: '2025-10-21 09:45'
   },
   {
     id: '29',
