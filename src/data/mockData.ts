@@ -1,27 +1,3 @@
-export const callHistoryKPI = {
-  totalCalls: 56,
-  avgCallDuration: '1 min 37 s',
-  resolutionRate: '25%',
-  escalationRate: '19%'
-};
-
-export const cxReportsKPI = {
-  intentRecognition: 'UP/Down this week',
-  avgResponseTime: '1 minute',
-  cost: '$1200',
-  totalCallsToday: 15, // This will be dynamically calculated
-  avgResolutionTime: '3 minutes',
-  unassignedTickets: 5
-};
-
-// Function to get total calls for a specific date
-export const getTotalCallsForDate = (date: string): number => {
-  return callHistoryRecords.filter(record => {
-    const recordDate = record.date.split(' ')[0]; // Extract date part (YYYY-MM-DD)
-    return recordDate === date;
-  }).length;
-};
-
 // Function to get calls for date range
 export const getCallsForDateRange = (startDate: string, endDate: string) => {
   return callHistoryRecords.filter(record => {
@@ -65,121 +41,6 @@ export const getCallsForMonth = (date: string) => {
   return getCallsForDateRange(startDateStr, endDateStr);
 };
 
-// Function to get filtered intent accuracy data for a specific date
-export const getIntentAccuracyDataForDate = (date: string) => {
-  const filteredCalls = callHistoryRecords.filter(record => {
-    const recordDate = record.date.split(' ')[0];
-    return recordDate === date;
-  });
-
-  // Map actual intent names to chart labels
-  const intentMapping: { [key: string]: string } = {
-    'Fraud Reporting': 'Fraud',
-    'Change Disputes': 'Disputes',
-    'Due Date Changes': 'Late Payment',
-    'Balance Enquiry': 'Balance',
-    'Credit Report Disputes': 'Credit Report',
-    'T&C requests': 'T&C',
-    'Auto-pay Enrollment': 'Balance', // Map to Balance for simplicity
-    'Customer Trade Lines': 'Balance' // Map to Balance for simplicity
-  };
-
-  // Count calls by intent and whether they were escalated or handled by AI
-  const intentCounts: { [key: string]: { aiHandled: number; escalated: number } } = {};
-  
-  // Initialize all chart intents
-  const allIntents = ['Fraud', 'Disputes', 'Late Payment', 'Balance', 'Credit Report', 'T&C'];
-  allIntents.forEach(intent => {
-    intentCounts[intent] = { aiHandled: 0, escalated: 0 };
-  });
-
-  // Count calls for the selected date
-  filteredCalls.forEach(call => {
-    const chartIntent = intentMapping[call.intent] || 'Balance'; // Default to Balance if not mapped
-    
-    // For this example, we'll assume some calls are escalated based on duration or other factors
-    // In a real app, this would come from the actual data
-    const isEscalated = call.duration.includes('4:') || call.duration.includes('3:') || 
-                       (call.intent === 'Fraud Reporting' && Math.random() > 0.7) ||
-                       (call.intent === 'Change Disputes' && Math.random() > 0.6);
-    
-    if (isEscalated) {
-      intentCounts[chartIntent].escalated++;
-    } else {
-      intentCounts[chartIntent].aiHandled++;
-    }
-  });
-
-  return {
-    labels: allIntents,
-    aiHandled: allIntents.map(intent => intentCounts[intent].aiHandled),
-    escalated: allIntents.map(intent => intentCounts[intent].escalated)
-  };
-};
-
-// Function to get filtered sentiment data for a specific date
-export const getSentimentDataForDate = (date: string) => {
-  const filteredCalls = callHistoryRecords.filter(record => {
-    const recordDate = record.date.split(' ')[0];
-    return recordDate === date;
-  });
-
-  // For this example, we'll simulate sentiment based on call duration and intent
-  let positive = 0;
-  let neutral = 0;
-  let negative = 0;
-
-  filteredCalls.forEach(call => {
-    const duration = parseInt(call.duration.split(':')[0]);
-    
-    // Simple sentiment logic based on duration and intent
-    if (duration <= 2 && (call.intent === 'Balance Enquiry' || call.intent === 'Auto-pay Enrollment')) {
-      positive++;
-    } else if (duration >= 4 || call.intent === 'Fraud Reporting' || call.intent === 'Change Disputes') {
-      negative++;
-    } else {
-      neutral++;
-    }
-  });
-
-  const total = positive + neutral + negative;
-  if (total === 0) {
-    return {
-      labels: ['Positive', 'Neutral', 'Negative'],
-      values: [0, 0, 0],
-      colors: [
-        'rgba(34, 197, 94, 0.8)',
-        'rgba(156, 163, 175, 0.8)',
-        'rgba(239, 68, 68, 0.8)'
-      ],
-      borderColors: [
-        'rgba(34, 197, 94, 1)',
-        'rgba(156, 163, 175, 1)',
-        'rgba(239, 68, 68, 1)'
-      ]
-    };
-  }
-
-  return {
-    labels: ['Positive', 'Neutral', 'Negative'],
-    values: [
-      Math.round((positive / total) * 100),
-      Math.round((neutral / total) * 100),
-      Math.round((negative / total) * 100)
-    ],
-    colors: [
-      'rgba(34, 197, 94, 0.8)',
-      'rgba(156, 163, 175, 0.8)',
-      'rgba(239, 68, 68, 0.8)'
-    ],
-    borderColors: [
-      'rgba(34, 197, 94, 1)',
-      'rgba(156, 163, 175, 1)',
-      'rgba(239, 68, 68, 1)'
-    ]
-  };
-};
-
 // Function to get filtered KPIs for a specific date/period
 export const getKPIsForPeriod = (date: string, period: 'day' | 'week' | 'month' = 'day') => {
   let filteredCalls;
@@ -202,7 +63,6 @@ export const getKPIsForPeriod = (date: string, period: 'day' | 'week' | 'month' 
 
   if (filteredCalls.length === 0) {
     return {
-      intentRecognition: 'No data',
       avgResponseTime: '0 minutes',
       cost: '$0',
       avgCostPerCall: '$0',
@@ -245,13 +105,6 @@ export const getKPIsForPeriod = (date: string, period: 'day' | 'week' | 'month' 
     return totalCost + callCost;
   }, 0);
 
-  // Calculate escalation rate
-  const escalatedCalls = filteredCalls.filter(call => 
-    call.duration.includes('4:') || call.duration.includes('3:') ||
-    (call.intent === 'Fraud Reporting' && Math.random() > 0.7)
-  ).length;
-  const escalationRate = Math.round((escalatedCalls / filteredCalls.length) * 100);
-
   // Calculate latency (average response time in milliseconds)
   const latency = filteredCalls.reduce((totalLatency, call) => {
     // Add base latency based on intent complexity
@@ -272,105 +125,16 @@ export const getKPIsForPeriod = (date: string, period: 'day' | 'week' | 'month' 
   
   const avgLatency = filteredCalls.length > 0 ? latency / filteredCalls.length : 0;
 
-  // Get current date for comparison
-  const today = new Date();
-  const selectedDate = new Date(date);
-  const isToday = selectedDate.toDateString() === today.toDateString();
-
-  // Dynamic intent recognition based on time period
-  let intentRecognitionText = '';
-  if (period === 'week') {
-    intentRecognitionText = escalationRate < 30 ? 'UP this week' : 'DOWN this week';
-  } else if (period === 'month') {
-    intentRecognitionText = escalationRate < 30 ? 'UP this month' : 'DOWN this month';
-  } else {
-    // Day period
-    if (isToday) {
-      intentRecognitionText = escalationRate < 30 ? 'UP today' : 'DOWN today';
-    } else {
-      intentRecognitionText = escalationRate < 30 ? 'UP on this day' : 'DOWN on this day';
-    }
-  }
-
   // Calculate average cost per call
   const avgCostPerCall = filteredCalls.length > 0 ? cost / filteredCalls.length : 0;
 
   return {
-    intentRecognition: intentRecognitionText,
     avgResponseTime: `${avgResponseTime} minutes`,
     cost: `$${Math.round(cost * 100) / 100}`,
     avgCostPerCall: `$${Math.round(avgCostPerCall * 100) / 100}`,
     totalCallsToday: filteredCalls.length,
     avgResolutionTime: `${avgResponseTime + 1} minutes`,
     latency: `${Math.round(avgLatency)}ms`
-  };
-};
-
-// Backward compatibility function
-export const getKPIsForDate = (date: string) => {
-  return getKPIsForPeriod(date, 'day');
-};
-
-// Function to get filtered intent accuracy data for different periods
-export const getIntentAccuracyDataForPeriod = (date: string, period: 'day' | 'week' | 'month' = 'day') => {
-  let filteredCalls;
-  
-  switch (period) {
-    case 'week':
-      filteredCalls = getCallsForWeek(date);
-      break;
-    case 'month':
-      filteredCalls = getCallsForMonth(date);
-      break;
-    case 'day':
-    default:
-      filteredCalls = callHistoryRecords.filter(record => {
-        const recordDate = record.date.split(' ')[0];
-        return recordDate === date;
-      });
-      break;
-  }
-
-  // Map actual intent names to chart labels
-  const intentMapping: { [key: string]: string } = {
-    'Fraud Reporting': 'Fraud',
-    'Change Disputes': 'Disputes',
-    'Due Date Changes': 'Late Payment',
-    'Balance Enquiry': 'Balance',
-    'Credit Report Disputes': 'Credit Report',
-    'T&C requests': 'T&C',
-    'Auto-pay Enrollment': 'Balance',
-    'Customer Trade Lines': 'Balance'
-  };
-
-  // Count calls by intent and whether they were escalated or handled by AI
-  const intentCounts: { [key: string]: { aiHandled: number; escalated: number } } = {};
-  
-  // Initialize all chart intents
-  const allIntents = ['Fraud', 'Disputes', 'Late Payment', 'Balance', 'Credit Report', 'T&C'];
-  allIntents.forEach(intent => {
-    intentCounts[intent] = { aiHandled: 0, escalated: 0 };
-  });
-
-  // Count calls for the selected period
-  filteredCalls.forEach(call => {
-    const chartIntent = intentMapping[call.intent] || 'Balance';
-    
-    const isEscalated = call.duration.includes('4:') || call.duration.includes('3:') || 
-                       (call.intent === 'Fraud Reporting' && Math.random() > 0.7) ||
-                       (call.intent === 'Change Disputes' && Math.random() > 0.6);
-    
-    if (isEscalated) {
-      intentCounts[chartIntent].escalated++;
-    } else {
-      intentCounts[chartIntent].aiHandled++;
-    }
-  });
-
-  return {
-    labels: allIntents,
-    aiHandled: allIntents.map(intent => intentCounts[intent].aiHandled),
-    escalated: allIntents.map(intent => intentCounts[intent].escalated)
   };
 };
 
@@ -510,61 +274,6 @@ export const getSentimentDataForPeriod = (date: string, period: 'day' | 'week' |
       'rgba(239, 68, 68, 1)'
     ]
   };
-};
-
-export const intentAccuracyData = {
-  labels: ['Fraud', 'Disputes', 'Late Payment', 'Balance', 'Credit Report', 'T&C'],
-  aiHandled: [120, 80, 90, 150, 70, 130],
-  escalated: [30, 100, 60, 40, 50, 50]
-};
-
-export const sentimentAnalysisData = {
-  labels: ['Positive', 'Neutral', 'Negative'],
-  values: [60, 25, 15],
-  colors: [
-    'rgba(34, 197, 94, 0.8)',   // Green for Positive
-    'rgba(156, 163, 175, 0.8)', // Gray for Neutral
-    'rgba(239, 68, 68, 0.8)'    // Red for Negative
-  ],
-  borderColors: [
-    'rgba(34, 197, 94, 1)',
-    'rgba(156, 163, 175, 1)',
-    'rgba(239, 68, 68, 1)'
-  ]
-};
-
-export const ticketStatusByWeek = {
-  week1: { open: 12, resolved: 8 },
-  week2: { open: 15, resolved: 10 },
-  week3: { open: 18, resolved: 14 },
-  week4: { open: 22, resolved: 16 }
-};
-
-// Function to get current week of the month
-export const getCurrentWeekOfMonth = () => {
-  const now = new Date();
-  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-  const pastDaysOfMonth = now.getDate() - 1;
-  return Math.ceil((pastDaysOfMonth + firstDay.getDay() + 1) / 7);
-};
-
-// Function to generate dynamic week data based on current week
-export const getDynamicWeekData = () => {
-  const currentWeek = getCurrentWeekOfMonth();
-  const weeks = [];
-  
-  for (let i = 1; i <= currentWeek; i++) {
-    const weekKey = `week${i}` as keyof typeof ticketStatusByWeek;
-    if (ticketStatusByWeek[weekKey]) {
-      weeks.push({
-        week: `Week ${i}`,
-        open: ticketStatusByWeek[weekKey].open,
-        resolved: ticketStatusByWeek[weekKey].resolved
-      });
-    }
-  }
-  
-  return weeks;
 };
 
 export const callHistoryRecords = [
